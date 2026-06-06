@@ -581,7 +581,11 @@
         if (token) {
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
-            document.getElementById('usernameDisplay').textContent = currentUsername;
+            
+            const displayRole = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+            const fname = localStorage.getItem('fullname') || currentUsername;
+            document.getElementById('usernameDisplay').innerHTML = `<b>${fname}</b> <small style="opacity:0.8;">(${displayRole})</small>`;
+            
             if (userRole === 'admin') {
                 document.getElementById('adminBtn').style.display = 'inline-block';
                 document.getElementById('leaderboardBtn').style.display = 'inline-block';
@@ -640,12 +644,17 @@
                     token = data.accessToken;
                     currentUsername = u;
                     userRole = data.role || 'user';
+                    const fname = data.fullname || u;
                     localStorage.setItem('token', token);
                     localStorage.setItem('username', u);
                     localStorage.setItem('userRole', userRole);
+                    localStorage.setItem('fullname', fname);
                     document.getElementById('authOverlay').style.display = 'none';
                     document.getElementById('appContainer').style.display = 'block';
-                    document.getElementById('usernameDisplay').textContent = u;
+                    
+                    const displayRole = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+                    document.getElementById('usernameDisplay').innerHTML = `<b>${fname}</b> <small style="opacity:0.8;">(${displayRole})</small>`;
+                    
                     if (userRole === 'admin') {
                         document.getElementById('adminBtn').style.display = 'inline-block';
                         document.getElementById('leaderboardBtn').style.display = 'inline-block';

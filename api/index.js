@@ -101,7 +101,7 @@ app.post('/api/login', async (req, res) => {
         
         if (await bcrypt.compare(password, user.password)) {
             const accessToken = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
-            res.json({ accessToken: accessToken, role: user.role });
+            res.json({ accessToken: accessToken, role: user.role, fullname: user.fullname });
         } else {
             res.status(401).json({ error: 'Invalid password' });
         }

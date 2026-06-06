@@ -395,7 +395,7 @@
             const p = document.getElementById('password').value;
             if(!u || !p) return alert('Fill all fields');
 
-            const endpoint = isLoginMode ? '/login' : '/register';
+            const endpoint = isLoginMode ? '/api/login' : '/api/register';
             
             try {
                 const res = await fetch(endpoint, {

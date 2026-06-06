@@ -1272,9 +1272,10 @@
                     const lvl = Math.floor(u.xp / 100) + 1;
                     let medal = '';
                     if(i===0) medal = '🥇'; else if(i===1) medal = '🥈'; else if(i===2) medal = '🥉';
+                    const displayName = u.fullname ? `${u.fullname} <small style="opacity:0.6;">(@${u.username})</small>` : `@${u.username}`;
                     html += `
                         <div style="display:flex; justify-content:space-between; padding: 1rem; border-bottom:1px solid var(--border-color);">
-                            <span style="font-weight:bold; font-size:1.1rem;">${i+1}. ${medal} ${u.username}</span>
+                            <span style="font-weight:bold; font-size:1.1rem;">${i+1}. ${medal} ${displayName}</span>
                             <span class="level-badge" style="margin:0;">Level ${lvl} (${u.xp} XP)</span>
                         </div>
                     `;

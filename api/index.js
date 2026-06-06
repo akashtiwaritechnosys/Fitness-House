@@ -147,7 +147,7 @@ app.post('/api/habits', authenticateToken, async (req, res) => {
 app.get('/api/leaderboard', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { rows } = await pool.sql`
-            SELECT u.username, COALESCE(d.xp, 0) as xp 
+            SELECT u.username, u.fullname, COALESCE(d.xp, 0) as xp 
             FROM users u 
             JOIN user_data d ON u.id = d.user_id 
             ORDER BY d.xp DESC 

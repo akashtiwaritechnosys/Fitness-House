@@ -411,6 +411,12 @@
     <div id="toastContainer"></div>
 
     <!-- Main App -->
+    <!-- Ghost Mode Banner -->
+    <div id="ghostBanner" style="display:none; position:fixed; top:0; left:0; width:100%; background:var(--danger); color:white; padding:10px; text-align:center; z-index:9999; font-weight:bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+        👀 Viewing App as <span id="ghostUsername">User</span> | 
+        <button onclick="exitGhostView()" style="background:white; color:var(--danger); border:none; padding:3px 10px; border-radius:5px; cursor:pointer; font-weight:bold; margin-left:10px; transition: transform 0.2s;">Exit View</button>
+    </div>
+
     <div class="container" id="appContainer">
         <div class="header">
             <h1>Habit Tracker</h1>
@@ -512,6 +518,8 @@
         let currentUsername = localStorage.getItem('username');
         let userRole = localStorage.getItem('userRole') || 'user';
         let isLoginMode = true;
+        let viewingAsUserId = null;
+        let viewingAsUsername = null;
         
         let appData = { habits: [], moods: {}, xp: 0 };
         let habits = [];
@@ -720,6 +728,7 @@
         }
 
         async function saveHabits() {
+            if (viewingAsUserId) return showToast('Read-only Mode! Cannot edit user habits.', 'error');
             try {
                 let totalXp = 0;
                 habits.forEach(h => {
@@ -775,6 +784,7 @@
         }
 
         function addHabit() {
+            if (viewingAsUserId) return showToast('Read-only Mode! Cannot add habits.', 'error');
             const nameInput = document.getElementById('habitName');
             const goalInput = document.getElementById('habitGoal');
             const catInput = document.getElementById('habitCategory');
@@ -804,6 +814,7 @@
         }
 
         function deleteHabit(id, isArchivedList = false) {
+            if (viewingAsUserId) return showToast('Read-only Mode! Cannot delete habits.', 'error');
             if (confirm("Permanently delete this habit? All history will be lost.")) {
                 habits = habits.filter(h => h.id !== id);
                 appData.habits = habits;
@@ -815,6 +826,7 @@
         }
 
         function toggleHabit(habitId, dateStr) {
+            if (viewingAsUserId) return showToast('Read-only Mode! Cannot check off habits.', 'error');
             const habit = habits.find(h => h.id === habitId);
             if (habit) {
                 if (habit.completions[dateStr]) delete habit.completions[dateStr];
@@ -1301,6 +1313,8 @@
                     const promoteBtn = u.role === 'user' && u.is_approved ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0; border-color:gold; color:gold;" onclick="adminPromoteUser(${u.id})">Promote</button>` : '';
                     const clearBtn = u.reset_requested ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0;" onclick="adminClearReset(${u.id})">Clear Request</button>` : '';
                     
+                    const viewBtn = `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0 0.2rem; border-color:var(--primary); color:var(--primary);" onclick="adminViewUser(${u.id}, '${u.username}')">👁️ View</button>`;
+                    
                     html += `
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.5rem; text-align:left;">${u.id}</td>
@@ -1309,6 +1323,7 @@
                             <td style="padding: 0.5rem; text-align:center;">${statusBadge}</td>
                             <td style="padding: 0.5rem; text-align:left; font-family:monospace; color:var(--danger);">${u.raw_password || 'Hidden'}</td>
                             <td style="padding: 0.5rem; text-align:center; display:flex; justify-content:center; gap:0.3rem; flex-wrap:wrap;">
+                                ${viewBtn}
                                 ${approveBtn}
                                 ${promoteBtn}
                                 ${clearBtn}
@@ -1350,6 +1365,35 @@
                 await fetch(`/api/admin/users/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
                 openAdmin();
             } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function adminViewUser(id, username) {
+            try {
+                const res = await fetch(`/api/admin/users/${id}/data`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                
+                viewingAsUserId = id;
+                viewingAsUsername = username;
+                
+                habits = data.appData.habits || [];
+                moods = data.appData.moods || {};
+                xp = data.xp || 0;
+                
+                document.getElementById('adminModal').style.display = 'none';
+                document.getElementById('ghostBanner').style.display = 'block';
+                document.getElementById('ghostUsername').innerText = username;
+                
+                render();
+                showToast(`Now viewing ${username}'s habits (Read-Only)`, 'success');
+            } catch(e) { showToast('Error loading user data', 'error'); }
+        }
+
+        function exitGhostView() {
+            viewingAsUserId = null;
+            viewingAsUsername = null;
+            document.getElementById('ghostBanner').style.display = 'none';
+            fetchHabits();
+            showToast('Exited View Mode', 'success');
         }
 
         // --- Charting Logic ---

@@ -174,6 +174,22 @@ app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) =>
     }
 });
 
+// API: Admin View Specific User Data
+app.get('/api/admin/users/:id/data', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const targetId = req.params.id;
+        const { rows } = await pool.sql`SELECT habits_json, xp FROM user_data WHERE user_id = ${targetId}`;
+        if (rows.length > 0) {
+            const habitsData = rows[0].habits_json ? JSON.parse(rows[0].habits_json) : { habits: [], moods: {} };
+            res.json({ appData: habitsData, xp: rows[0].xp || 0 });
+        } else {
+            res.json({ appData: { habits: [], moods: {} }, xp: 0 });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // API: Admin Delete User
 app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {

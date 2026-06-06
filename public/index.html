@@ -11,191 +11,244 @@
     <meta name="theme-color" content="#667eea">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --card-bg: rgba(255, 255, 255, 0.95);
+            --bg-gradient: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            --card-bg: rgba(255, 255, 255, 0.65);
             --text-main: #2d3748;
             --text-muted: #718096;
             --primary: #667eea;
             --primary-hover: #5a67d8;
             --danger: #fc8181;
             --danger-hover: #f56565;
-            --border-color: #e2e8f0;
+            --border-color: rgba(255, 255, 255, 0.8);
+            --border-inner: rgba(0, 0, 0, 0.05);
             --success: #48bb78;
         }
 
         body.dark-mode {
-            --bg-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            --card-bg: rgba(26, 32, 44, 0.95);
-            --text-main: #f7fafc;
-            --text-muted: #a0aec0;
-            --border-color: #4a5568;
+            --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --card-bg: rgba(15, 23, 42, 0.65);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-inner: rgba(255, 255, 255, 0.05);
             --primary: #818cf8;
             --primary-hover: #6366f1;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
         body {
-            background: var(--bg-gradient); min-height: 100vh;
+            background: var(--bg-gradient); background-attachment: fixed; min-height: 100vh;
             display: flex; justify-content: center; align-items: center;
-            padding: 2rem; color: var(--text-main); transition: background 0.3s ease;
+            padding: 2rem; color: var(--text-main); transition: background 0.5s ease;
         }
 
-        /* --- Auth Modal --- */
+        /* --- Animations --- */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes slideUpRow {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes checkPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* --- Auth & Modals --- */
         .auth-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
-            z-index: 1000; backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            transition: opacity 0.3s ease;
         }
 
         .auth-card {
-            background: var(--card-bg); padding: 3rem; border-radius: 20px;
-            width: 100%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center;
+            background: var(--card-bg); padding: 3rem; border-radius: 24px;
+            width: 100%; max-width: 450px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.4);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        .auth-card h2 { margin-bottom: 1.5rem; color: var(--text-main); }
+        .auth-card h2 { margin-bottom: 1.5rem; color: var(--text-main); font-weight: 700; letter-spacing: -0.5px; }
         .auth-card input, .auth-card select, .auth-card textarea {
-            width: 100%; margin-bottom: 1rem; padding: 1rem;
-            border: 2px solid var(--border-color); border-radius: 12px; font-size: 1rem;
-            background: transparent; color: var(--text-main);
+            width: 100%; margin-bottom: 1rem; padding: 1rem 1.2rem;
+            border: 1px solid var(--border-inner); border-radius: 14px; font-size: 1rem;
+            background: rgba(255,255,255,0.1); color: var(--text-main);
+            backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
-        .auth-card button { width: 100%; padding: 1rem; justify-content: center; margin-top: 0.5rem; }
-        .auth-card p { margin-top: 1.5rem; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
+        body.dark-mode .auth-card input, body.dark-mode .auth-card select, body.dark-mode .auth-card textarea {
+            background: rgba(0,0,0,0.2);
+        }
+        .auth-card button { width: 100%; padding: 1rem; justify-content: center; margin-top: 0.5rem; border-radius: 14px; }
+        .auth-card p { margin-top: 1.5rem; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: color 0.2s; }
+        .auth-card p:hover { color: var(--text-main); }
         .auth-card p span { color: var(--primary); font-weight: 600; }
 
         /* --- Main App UI --- */
         .container {
-            background: var(--card-bg); border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            width: 100%; max-width: 1200px; padding: 2.5rem; backdrop-filter: blur(10px);
-            display: none; transition: background 0.3s ease;
+            background: var(--card-bg); border-radius: 28px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5);
+            width: 100%; max-width: 1200px; padding: 2.5rem; 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color);
+            display: none; animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        h1 { font-size: 2.2rem; font-weight: 800; background: -webkit-linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+        h1 { font-size: 2.2rem; font-weight: 800; background: -webkit-linear-gradient(45deg, var(--primary), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; }
 
-        .add-form { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .add-form { display: flex; gap: 0.8rem; flex-wrap: wrap; }
         input[type="text"], input[type="number"], select {
-            padding: 0.75rem 1.2rem; border: 2px solid var(--border-color); border-radius: 12px;
-            font-size: 1rem; outline: none; transition: all 0.3s; background: transparent; color: var(--text-main);
+            padding: 0.75rem 1.2rem; border: 1px solid var(--border-inner); border-radius: 12px;
+            font-size: 1rem; outline: none; transition: all 0.3s ease; background: rgba(255,255,255,0.1); color: var(--text-main);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); backdrop-filter: blur(10px);
         }
-        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15); }
+        body.dark-mode input[type="text"], body.dark-mode input[type="number"], body.dark-mode select { background: rgba(0,0,0,0.2); }
+        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15); background: transparent; }
 
         button {
             padding: 0.75rem 1.5rem; border: none; border-radius: 12px; background: var(--primary);
-            color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s;
-            display: flex; align-items: center; gap: 0.5rem;
+            color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
         }
-        button:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3); }
+        button:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+        button:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
 
-        .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-color); }
-        table { width: 100%; border-collapse: collapse; }
+        .table-container { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border-inner); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        body.dark-mode .table-container { background: rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
         th {
-            text-align: center; padding: 1.2rem 1rem; color: var(--text-muted); font-weight: 600;
-            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
-            border-bottom: 2px solid var(--border-color); background: rgba(0,0,0,0.02);
+            text-align: center; padding: 1.2rem 1rem; color: var(--text-muted); font-weight: 700;
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--border-inner); background: rgba(0,0,0,0.02);
         }
-        th:first-child { text-align: left; padding-left: 1.5rem; }
-        tbody tr { border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
-        tbody tr.dragging { opacity: 0.5; background: rgba(102, 126, 234, 0.1) !important; }
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: rgba(0,0,0,0.03); }
+        th:first-child { text-align: left; padding-left: 1.5rem; border-top-left-radius: 16px; }
+        th:last-child { border-top-right-radius: 16px; }
+        
+        tbody tr { border-bottom: 1px solid var(--border-inner); transition: all 0.2s ease; opacity: 0; animation: slideUpRow 0.4s ease forwards; }
+        tbody tr:nth-child(1) { animation-delay: 0.05s; } tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        tbody tr:nth-child(3) { animation-delay: 0.15s; } tbody tr:nth-child(4) { animation-delay: 0.2s; }
+        tbody tr:nth-child(5) { animation-delay: 0.25s; } tbody tr:nth-child(n+6) { animation-delay: 0.3s; }
+        
+        tbody tr.dragging { opacity: 0.5 !important; background: rgba(102, 126, 234, 0.1) !important; transform: scale(0.99); }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:last-child td:first-child { border-bottom-left-radius: 16px; }
+        tbody tr:last-child td:last-child { border-bottom-right-radius: 16px; }
+        
+        tbody tr:hover { background: rgba(255,255,255,0.5); transform: scale(1.005); box-shadow: 0 4px 15px rgba(0,0,0,0.02); border-radius: 12px; z-index: 10; position: relative; }
         body.dark-mode tbody tr:hover { background: rgba(255,255,255,0.05); }
 
-        td { padding: 1.2rem 1rem; vertical-align: middle; text-align: center; }
+        td { padding: 1.2rem 1rem; vertical-align: middle; text-align: center; border-bottom: 1px solid var(--border-inner); }
         td:first-child { text-align: left; padding-left: 1.5rem; font-weight: 500; color: var(--text-main); }
 
-        .editable { cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px dashed transparent; transition: all 0.2s; display: inline-block; min-width: 50px; word-break: break-word; }
-        .editable:hover { background: rgba(0,0,0,0.05); border-color: var(--border-color); }
-        body.dark-mode .editable:hover { background: rgba(255,255,255,0.1); }
-        .editable:focus { background: transparent; border-color: var(--primary); border-style: solid; outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .editable { cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid transparent; transition: all 0.2s; display: inline-block; min-width: 50px; word-break: break-word; }
+        .editable:hover { background: rgba(0,0,0,0.04); border-color: var(--border-inner); }
+        body.dark-mode .editable:hover { background: rgba(255,255,255,0.08); }
+        .editable:focus { background: var(--card-bg); border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
 
-        .goal-cell { font-weight: 600; color: var(--primary); background: rgba(102, 126, 234, 0.1); border-radius: 8px; padding: 0.4rem 0.8rem; display: inline-block; }
+        .goal-cell { font-weight: 700; color: var(--primary); background: rgba(102, 126, 234, 0.1); border-radius: 8px; padding: 0.4rem 0.8rem; display: inline-block; }
 
-        /* Checkbox */
+        /* Squirkle Checkbox */
         .checkbox-wrapper { display: inline-block; position: relative; }
         .checkbox-wrapper input[type="checkbox"] { display: none; }
         .checkbox-wrapper label {
-            display: block; width: 26px; height: 26px; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer;
-            position: relative; transition: all 0.3s; margin: 0 auto; background: transparent;
+            display: block; width: 28px; height: 28px; border: 2px solid var(--border-inner); 
+            border-radius: 10px; cursor: pointer; position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            margin: 0 auto; background: rgba(255,255,255,0.3); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
+        body.dark-mode .checkbox-wrapper label { background: rgba(0,0,0,0.2); }
+        
+        .checkbox-wrapper label:hover { border-color: var(--primary); background: rgba(102, 126, 234, 0.05); transform: scale(1.05); }
+        
         .checkbox-wrapper input[type="checkbox"]:checked + label {
-            background-color: var(--success); border-color: var(--success); transform: scale(1.05); box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+            background-color: var(--success); border-color: var(--success); 
+            animation: checkPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
         }
         .checkbox-wrapper input[type="checkbox"]:checked + label::after {
-            content: ''; position: absolute; left: 8px; top: 4px; width: 6px; height: 12px;
-            border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+            content: ''; position: absolute; left: 9px; top: 5px; width: 6px; height: 12px;
+            border: solid white; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
         }
 
         .actions { display: flex; gap: 0.5rem; justify-content: center; }
-        .btn-icon { background: transparent; color: var(--text-muted); padding: 0.5rem; border-radius: 8px; font-size: 1.2rem; box-shadow: none; cursor: grab; }
-        .btn-icon:active { cursor: grabbing; }
-        .btn-icon:hover { background: rgba(0, 0, 0, 0.05); transform: scale(1.1); }
+        .btn-icon { background: transparent; color: var(--text-muted); padding: 0.5rem; border-radius: 10px; font-size: 1.2rem; box-shadow: none; cursor: grab; transition: all 0.2s; }
+        .btn-icon:active { cursor: grabbing; transform: scale(0.95); }
+        .btn-icon:hover { background: rgba(0, 0, 0, 0.05); color: var(--text-main); transform: scale(1.1); }
+        body.dark-mode .btn-icon:hover { background: rgba(255,255,255,0.1); }
         .btn-delete:hover { background: rgba(252, 129, 129, 0.1); color: var(--danger); }
         
-        .empty-state { text-align: center; padding: 4rem; color: var(--text-muted); }
+        .empty-state { text-align: center; padding: 4rem; color: var(--text-muted); font-size: 1.1rem; }
         
         .controls {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
-            background: rgba(0,0,0,0.02); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.3); padding: 1rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-inner);
+            backdrop-filter: blur(10px);
         }
         body.dark-mode .controls { background: rgba(0,0,0,0.2); }
         
         .week-nav { display: flex; gap: 1rem; align-items: center; font-weight: 600; }
-        .week-nav button { background: transparent; color: var(--text-main); padding: 0.5rem 1rem; border: 1px solid var(--border-color); font-size: 0.9rem; }
-        .week-nav button:hover { background: rgba(0,0,0,0.05); transform: translateY(0); }
+        .week-nav button { background: transparent; color: var(--text-main); padding: 0.5rem 1rem; border: 1px solid var(--border-inner); font-size: 0.9rem; box-shadow: none; }
+        .week-nav button:hover { background: rgba(0,0,0,0.05); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         body.dark-mode .week-nav button:hover { background: rgba(255,255,255,0.1); }
 
-        .secondary-btn { background: transparent; color: var(--text-main); border: 1px solid var(--border-color); font-size: 0.9rem; }
-        .secondary-btn:hover { background: rgba(0, 0, 0, 0.05); border-color: var(--border-color); color: var(--text-main); }
-        body.dark-mode .secondary-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .secondary-btn { background: transparent; color: var(--text-main); border: 1px solid var(--border-inner); font-size: 0.9rem; box-shadow: none; }
+        .secondary-btn:hover { background: rgba(0, 0, 0, 0.04); border-color: var(--text-muted); color: var(--text-main); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        body.dark-mode .secondary-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--text-muted); }
         
-        .danger-btn { color: var(--danger); border-color: var(--danger); }
-        .danger-btn:hover { background: rgba(252, 129, 129, 0.1); border-color: var(--danger-hover); color: var(--danger-hover); }
+        .danger-btn { color: var(--danger); border-color: rgba(252, 129, 129, 0.5); }
+        .danger-btn:hover { background: rgba(252, 129, 129, 0.1); border-color: var(--danger); color: var(--danger); box-shadow: 0 4px 12px rgba(252, 129, 129, 0.2); }
 
         .user-info { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-        .user-badge { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+        .user-badge { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); }
 
         /* V4/V5 Features CSS */
         .goal-input { width: 100px; }
-        .progress-container { width: 100%; height: 12px; background: rgba(0,0,0,0.05); border-radius: 6px; margin-bottom: 1.5rem; overflow: hidden; position: relative; border: 1px solid var(--border-color); }
+        .progress-container { width: 100%; height: 14px; background: rgba(0,0,0,0.05); border-radius: 7px; margin-bottom: 1.5rem; overflow: hidden; position: relative; border: 1px solid var(--border-inner); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
         body.dark-mode .progress-container { background: rgba(0,0,0,0.3); }
-        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #a78bfa); width: 0%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 6px; }
-        .streak-badge { font-size: 0.8rem; color: #ed8936; margin-left: 0.5rem; font-weight: bold; padding: 2px 6px; background: rgba(237, 137, 54, 0.15); border-radius: 10px;}
-        .mood-cell { cursor: pointer; font-size: 1.5rem; transition: transform 0.2s; user-select: none; }
-        .mood-cell:hover { transform: scale(1.2); }
-        .note-indicator { position:absolute; top:4px; right:6px; font-size:0.8rem; cursor:pointer; transition: transform 0.2s; }
-        .note-indicator:hover { transform: scale(1.2); }
-        .timer-indicator { position:absolute; top:4px; left:4px; font-size:0.8rem; cursor:pointer; transition: transform 0.2s; }
-        .timer-indicator:hover { transform: scale(1.2); }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #a78bfa); width: 0%; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 7px; box-shadow: 0 0 10px rgba(102,126,234,0.5); }
+        .streak-badge { font-size: 0.8rem; color: #ed8936; margin-left: 0.5rem; font-weight: 800; padding: 2px 8px; background: rgba(237, 137, 54, 0.15); border-radius: 12px; box-shadow: 0 2px 5px rgba(237,137,54,0.2); }
+        .mood-cell { cursor: pointer; font-size: 1.5rem; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; }
+        .mood-cell:hover { transform: scale(1.3); }
+        .note-indicator, .timer-indicator { position:absolute; font-size:1rem; cursor:pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .note-indicator { top:4px; right:6px; }
+        .timer-indicator { top:4px; left:4px; }
+        .note-indicator:hover, .timer-indicator:hover { transform: scale(1.3); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); }
 
-        .level-badge { background: linear-gradient(135deg, #f6ad55, #ed8936); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: bold; font-size: 0.9rem; cursor: help; }
-        .filter-chip { background: transparent; color: var(--text-main); padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
-        .filter-chip:hover { background: rgba(0,0,0,0.05); }
-        body.dark-mode .filter-chip:hover { background: rgba(255,255,255,0.1); }
-        .filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3); }
+        .level-badge { background: linear-gradient(135deg, #f6ad55, #ed8936); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem; cursor: help; box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3); text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .filter-chip { background: rgba(255,255,255,0.4); color: var(--text-main); padding: 0.5rem 1.2rem; border-radius: 20px; border: 1px solid var(--border-inner); cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); font-size: 0.85rem; font-weight: 600; white-space: nowrap; backdrop-filter: blur(5px); }
+        body.dark-mode .filter-chip { background: rgba(0,0,0,0.2); }
+        .filter-chip:hover { background: rgba(255,255,255,0.8); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+        body.dark-mode .filter-chip:hover { background: rgba(255,255,255,0.15); }
+        .filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4); transform: translateY(-2px); }
 
         /* --- Responsive Design --- */
         @media (max-width: 768px) {
-            body { padding: 1rem; display: block; }
+            body { padding: 0; display: block; }
             .auth-overlay { align-items: flex-start; padding-top: 2rem; }
-            .container { padding: 1rem; border-radius: 15px; margin: 0 auto; width: 100%; max-width: 100%; }
-            .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            h1 { font-size: 1.8rem; text-align: center; width: 100%; }
-            .header { flex-direction: column; align-items: stretch; gap: 1rem; margin-bottom: 1.5rem; }
+            .container { padding: 1.5rem; border-radius: 0; margin: 0; width: 100%; max-width: 100%; min-height: 100vh; border: none; }
+            .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+            h1 { font-size: 2rem; text-align: center; width: 100%; }
+            .header { flex-direction: column; align-items: stretch; gap: 1.5rem; margin-bottom: 2rem; }
             .add-form { flex-direction: column; width: 100%; }
-            .add-form input[type="text"], .add-form input[type="number"], .add-form select { width: 100%; font-size: 16px; }
-            .add-form button { width: 100%; justify-content: center; }
-            .controls { flex-direction: column; gap: 1rem; padding: 1rem; }
+            .add-form input[type="text"], .add-form input[type="number"], .add-form select { width: 100%; font-size: 16px; padding: 1rem; }
+            .add-form button { width: 100%; justify-content: center; padding: 1rem; }
+            .controls { flex-direction: column; gap: 1rem; padding: 1rem; border-radius: 16px; }
             .week-nav { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
-            .week-nav button { flex: 1; min-width: 100px; text-align: center; justify-content: center; }
+            .week-nav button { flex: 1; min-width: 100px; text-align: center; justify-content: center; padding: 0.8rem; }
             #currentWeekLabel { min-width: 100%; flex: 100%; text-align: center; order: -1; margin-bottom: 0.5rem; }
             .user-info { width: 100%; justify-content: center; flex-direction: row; flex-wrap: wrap; gap: 0.8rem; }
-            th, td { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
-            td:first-child, th:first-child { padding-left: 0.5rem; min-width: 120px; }
-            .auth-card { padding: 1.5rem; margin: 0 auto; width: 92%; }
+            th, td { padding: 1rem 0.5rem; font-size: 0.9rem; }
+            td:first-child, th:first-child { padding-left: 0.8rem; min-width: 140px; }
+            .auth-card { padding: 2rem 1.5rem; margin: 0 auto; width: 92%; border-radius: 20px; }
             .auth-card input, .auth-card select { font-size: 16px; }
             .action-btns { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
-            .action-btns button { width: 100%; }
+            .action-btns button { width: 100%; padding: 0.8rem; }
         }
     </style>
 </head>

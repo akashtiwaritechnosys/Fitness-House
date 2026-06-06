@@ -865,6 +865,7 @@
 
         function toggleHabit(habitId, dateStr) {
             if (viewingAsUserId) return showToast('Read-only Mode! Cannot check off habits.', 'error');
+            if (dateStr > formatDate(new Date())) return showToast('Cannot check off future dates!', 'warning');
             const habit = habits.find(h => h.id === habitId);
             if (habit) {
                 if (habit.completions[dateStr]) delete habit.completions[dateStr];
@@ -1179,7 +1180,10 @@
 
                 days.forEach(dayDate => {
                     const dateStr = formatDate(dayDate);
+                    const todayStr = formatDate(new Date());
                     const dayNum = dayDate.getDay();
+                    const isFuture = dateStr > todayStr;
+                    
                     let shouldShow = true;
                     if (freq === 'Weekdays' && (dayNum === 0 || dayNum === 6)) shouldShow = false;
                     if (freq === 'Weekends' && (dayNum !== 0 && dayNum !== 6)) shouldShow = false;
@@ -1190,7 +1194,7 @@
                         const isCompleted = habit.completions[dateStr];
                         const hasNote = habit.notes && habit.notes[dateStr] && habit.notes[dateStr].trim() !== '';
                         const checkboxId = `chk-${habit.id}-${dateStr}`;
-                        const isToday = formatDate(new Date()) === dateStr;
+                        const isToday = todayStr === dateStr;
                         let tdStyle = isToday ? 'background: rgba(72, 187, 120, 0.05);' : '';
                         if (isToday && document.body.classList.contains('dark-mode')) tdStyle = 'background: rgba(72, 187, 120, 0.15);';
                         
@@ -1201,11 +1205,11 @@
 
                         tdHtml += `
                             <td style="${tdStyle} position: relative;">
-                                <div class="checkbox-wrapper">
-                                    <input type="checkbox" id="${checkboxId}" ${isCompleted ? 'checked' : ''} onchange="toggleHabit(${habit.id}, '${dateStr}')">
+                                <div class="checkbox-wrapper" style="${isFuture ? 'opacity: 0.3; pointer-events: none;' : ''}">
+                                    <input type="checkbox" id="${checkboxId}" ${isCompleted ? 'checked' : ''} ${isFuture ? 'disabled' : ''} onchange="toggleHabit(${habit.id}, '${dateStr}')">
                                     <label for="${checkboxId}"></label>
                                 </div>
-                                <div class="note-indicator" onclick="openNoteModal(${habit.id}, '${dateStr}')" style="opacity: ${hasNote ? 1 : 0.2};" title="Add/Edit Note">📝</div>
+                                <div class="note-indicator" onclick="${isFuture ? '' : `openNoteModal(${habit.id}, '${dateStr}')`}" style="opacity: ${hasNote ? 1 : 0.2}; ${isFuture ? 'display:none;' : ''}" title="Add/Edit Note">📝</div>
                                 ${timerHtml}
                             </td>
                         `;

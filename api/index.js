@@ -137,7 +137,7 @@ app.post('/api/habits', authenticateToken, async (req, res) => {
 });
 
 // API: Leaderboard
-app.get('/api/leaderboard', authenticateToken, async (req, res) => {
+app.get('/api/leaderboard', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { rows } = await pool.sql`
             SELECT u.username, COALESCE(d.xp, 0) as xp 

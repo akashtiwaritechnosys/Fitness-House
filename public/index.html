@@ -437,7 +437,7 @@
                     <button class="secondary-btn" onclick="toggleDropdown(event)" style="border-radius: 50%; width: 45px; height: 45px; padding: 0; display: flex; justify-content: center; align-items: center; font-size: 1.2rem;">⋮</button>
                     <div id="mainDropdown" class="dropdown-content">
                         <button class="dropdown-item" onclick="openAdmin()" id="adminBtn" style="display:none; color: gold;">👑 Admin Dashboard</button>
-                        <button class="dropdown-item" onclick="openLeaderboard()">🏆 Leaderboard</button>
+                        <button class="dropdown-item" onclick="openLeaderboard()" id="leaderboardBtn" style="display:none; color: #ed8936;">🏆 Leaderboard</button>
                         <button class="dropdown-item" onclick="openChartModal()">📈 View Progress</button>
                         <button class="dropdown-item" onclick="openArchiveModal()">📂 View Archive</button>
                         <button class="dropdown-item" onclick="exportCSV()">📊 Export CSV</button>
@@ -581,7 +581,10 @@
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
             document.getElementById('usernameDisplay').textContent = currentUsername;
-            if (userRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-block';
+            if (userRole === 'admin') {
+                document.getElementById('adminBtn').style.display = 'inline-block';
+                document.getElementById('leaderboardBtn').style.display = 'inline-block';
+            }
             fetchHabits();
         }
 
@@ -638,7 +641,10 @@
                     document.getElementById('authOverlay').style.display = 'none';
                     document.getElementById('appContainer').style.display = 'block';
                     document.getElementById('usernameDisplay').textContent = u;
-                    if (userRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-block';
+                    if (userRole === 'admin') {
+                        document.getElementById('adminBtn').style.display = 'inline-block';
+                        document.getElementById('leaderboardBtn').style.display = 'inline-block';
+                    }
                     fetchHabits();
                 } else {
                     showToast('Registration successful! Please login.', 'success');

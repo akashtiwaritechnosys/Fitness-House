@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Habit Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #667eea;
+            --primary-hover: #5a67d8;
+            --danger: #fc8181;
+            --danger-hover: #f56565;
+            --border-color: #e2e8f0;
+            --success: #48bb78;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: var(--text-main);
+        }
+
+        /* --- Auth Modal --- */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .auth-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .auth-card h2 {
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+        }
+
+        .auth-card input {
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+
+        .auth-card button {
+            width: 100%;
+            padding: 1rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .auth-card p {
+            margin-top: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .auth-card p span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* --- Main App UI --- */
+        .container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 1100px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+            display: none; /* hidden until logged in */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: -webkit-linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 0.75rem 1.2rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            background: #fdfdfd;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            background: #fff;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            text-align: center;
+            padding: 1.2rem 1rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-bottom: 2px solid var(--border-color);
+            background: #f8fafc;
+        }
+
+        th:first-child { text-align: left; padding-left: 1.5rem; }
+        
+        tbody tr { border-bottom: 1px solid var(--border-color); transition: background 0.2s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #fbfdff; }
+
+        td {
+            padding: 1.2rem 1rem;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        td:first-child {
+            text-align: left;
+            padding-left: 1.5rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .editable {
+            cursor: pointer;
+            padding: 0.4rem 0.6rem;
+            border-radius: 8px;
+            border: 1px dashed transparent;
+            transition: all 0.2s;
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .editable:hover { background: #f1f5f9; border-color: #cbd5e1; }
+        .editable:focus {
+            background: #fff;
+            border-color: var(--primary);
+            border-style: solid;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .goal-cell {
+            font-weight: 600;
+            color: var(--primary);
+            background: #e0e7ff;
+            border-radius: 8px;
+            padding: 0.4rem 0.8rem;
+            display: inline-block;
+        }
+
+        /* Checkbox */
+        .checkbox-wrapper { display: inline-block; position: relative; }
+        .checkbox-wrapper input[type="checkbox"] { display: none; }
+        .checkbox-wrapper label {
+            display: block; width: 26px; height: 26px;
+            border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer;
+            position: relative; transition: all 0.3s; margin: 0 auto; background: #fff;
+        }
+        .checkbox-wrapper input[type="checkbox"]:checked + label {
+            background-color: var(--success); border-color: var(--success);
+            transform: scale(1.05); box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+        }
+        .checkbox-wrapper input[type="checkbox"]:checked + label::after {
+            content: ''; position: absolute; left: 8px; top: 4px; width: 6px; height: 12px;
+            border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+        }
+
+        .actions { display: flex; gap: 0.5rem; justify-content: center; }
+        .btn-icon {
+            background: transparent; color: #a0aec0; padding: 0.5rem;
+            border-radius: 8px; font-size: 1.2rem; box-shadow: none;
+        }
+        .btn-icon:hover { background: #fff5f5; color: var(--danger); transform: scale(1.1); }
+
+        .empty-state { text-align: center; padding: 4rem; color: var(--text-muted); }
+        
+        .controls {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; background: #f8fafc; padding: 1rem 1.5rem;
+            border-radius: 12px; border: 1px solid var(--border-color);
+        }
+        
+        .week-nav { display: flex; gap: 1rem; align-items: center; font-weight: 600; }
+        .week-nav button {
+            background: white; color: var(--text-main); padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color); font-size: 0.9rem;
+        }
+        .week-nav button:hover { background: #f1f5f9; transform: translateY(0); }
+
+        .secondary-btn {
+            background: white; color: var(--text-main); border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+        .secondary-btn:hover { background: #fee2e2; color: var(--danger); border-color: #fca5a5; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .user-badge {
+            background: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Auth Modal -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <h2 id="authTitle">Welcome Back</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="authBtn" onclick="handleAuth()">Login</button>
+            <p id="authSwitch" onclick="switchAuthMode()">Don't have an account? <span>Register</span></p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="container" id="appContainer">
+        <div class="header">
+            <h1>Habit Tracker</h1>
+            <div class="add-form">
+                <input type="text" id="habitName" placeholder="e.g., 💧 Drink 3L Water" required>
+                <input type="number" id="habitGoal" placeholder="Goal" value="30" min="1" style="width: 100px;">
+                <button onclick="addHabit()">Add Habit</button>
+            </div>
+            <div class="user-info">
+                <span class="user-badge" id="usernameDisplay">User</span>
+                <button class="secondary-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="week-nav">
+                <button onclick="changeWeek(-1)">← Previous</button>
+                <span id="currentWeekLabel" style="min-width: 180px; text-align: center;">Week of ...</span>
+                <button onclick="changeWeek(1)">Next →</button>
+            </div>
+            <div>
+                <button class="secondary-btn" onclick="resetData()">Clear All Data</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="trackerTable">
+                <thead>
+                    <tr>
+                        <th>Daily Habits</th>
+                        <th>Goal</th>
+                        <th id="day-0">Mon</th>
+                        <th id="day-1">Tue</th>
+                        <th id="day-2">Wed</th>
+                        <th id="day-3">Thu</th>
+                        <th id="day-4">Fri</th>
+                        <th id="day-5">Sat</th>
+                        <th id="day-6">Sun</th>
+                        <th>Manage</th>
+                    </tr>
+                </thead>
+                <tbody id="habitList">
+                    <!-- Habits will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        const API_URL = ''; // Same origin
+        let token = localStorage.getItem('token');
+        let currentUsername = localStorage.getItem('username');
+        let isLoginMode = true;
+        
+        let habits = [];
+        
+        let currentDate = new Date();
+        let day = currentDate.getDay();
+        let diff = currentDate.getDate() - day + (day == 0 ? -6 : 1); 
+        let weekStart = new Date(currentDate.setDate(diff));
+        weekStart.setHours(0,0,0,0);
+
+        // --- Init ---
+        if (token) {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('usernameDisplay').textContent = currentUsername;
+            fetchHabits();
+        }
+
+        // --- Auth Functions ---
+        function switchAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? 'Welcome Back' : 'Create Account';
+            document.getElementById('authBtn').innerText = isLoginMode ? 'Login' : 'Register';
+            document.getElementById('authSwitch').innerHTML = isLoginMode ? 
+                `Don't have an account? <span>Register</span>` : 
+                `Already have an account? <span>Login</span>`;
+        }
+
+        async function handleAuth() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if(!u || !p) return alert('Fill all fields');
+
+            const endpoint = isLoginMode ? '/login' : '/register';
+            
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                
+                if(!res.ok) throw new Error(data.error);
+
+                if (isLoginMode) {
+                    token = data.accessToken;
+                    currentUsername = u;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('username', u);
+                    document.getElementById('authOverlay').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    document.getElementById('usernameDisplay').textContent = u;
+                    fetchHabits();
+                } else {
+                    alert('Registration successful! Please login.');
+                    switchAuthMode();
+                }
+            } catch(e) {
+                alert(e.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            location.reload();
+        }
+
+        // --- Data Functions ---
+        async function fetchHabits() {
+            try {
+                const res = await fetch('/api/habits', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.status === 401 || res.status === 403) return logout();
+                
+                const data = await res.json();
+                habits = Array.isArray(data) ? data : [];
+                
+                // Add defaults if brand new user
+                if(habits.length === 0) {
+                    habits = [
+                        { id: 1, name: "⏰ Wake up at 6AM", goal: 30, completions: {} },
+                        { id: 2, name: "💧 Drink 3L Water", goal: 30, completions: {} }
+                    ];
+                    saveHabits();
+                }
+                
+                render();
+            } catch (e) { console.error('Failed to fetch', e); }
+        }
+
+        async function saveHabits() {
+            try {
+                await fetch('/api/habits', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(habits)
+                });
+            } catch (e) { console.error('Failed to save', e); }
+        }
+
+        // --- App Logic ---
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${d}`;
+        }
+
+        function changeWeek(offset) {
+            weekStart.setDate(weekStart.getDate() + (offset * 7));
+            render();
+        }
+
+        function addHabit() {
+            const nameInput = document.getElementById('habitName');
+            const goalInput = document.getElementById('habitGoal');
+            const name = nameInput.value.trim();
+            const goal = parseInt(goalInput.value) || 30;
+
+            if (name) {
+                habits.push({ id: Date.now(), name, goal, completions: {} });
+                saveHabits();
+                nameInput.value = '';
+                render();
+            }
+        }
+
+        function deleteHabit(id) {
+            if (confirm("Delete this habit?")) {
+                habits = habits.filter(h => h.id !== id);
+                saveHabits();
+                render();
+            }
+        }
+
+        function toggleHabit(habitId, dateStr) {
+            const habit = habits.find(h => h.id === habitId);
+            if (habit) {
+                if (habit.completions[dateStr]) delete habit.completions[dateStr];
+                else habit.completions[dateStr] = true;
+                saveHabits();
+            }
+        }
+        
+        function updateHabitName(id, newName) {
+            const habit = habits.find(h => h.id === id);
+            if (habit && newName.trim() !== '') {
+                habit.name = newName.trim();
+                saveHabits();
+            } else if (habit) render(); 
+        }
+        
+        function updateHabitGoal(id, newGoalStr) {
+            const habit = habits.find(h => h.id === id);
+            const newGoal = parseInt(newGoalStr);
+            if (habit && !isNaN(newGoal) && newGoal > 0) {
+                habit.goal = newGoal;
+                saveHabits();
+            } else if (habit) render();
+        }
+
+        function resetData() {
+            if (confirm("Are you sure? This will delete all your personal habit data from the database.")) {
+                habits = [];
+                saveHabits();
+                render();
+            }
+        }
+
+        function render() {
+            const tbody = document.getElementById('habitList');
+            tbody.innerHTML = '';
+            
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const weekEndDate = new Date(weekStart);
+            weekEndDate.setDate(weekEndDate.getDate() + 6);
+            document.getElementById('currentWeekLabel').textContent = `${monthNames[weekStart.getMonth()]} ${weekStart.getDate()} - ${monthNames[weekEndDate.getMonth()]} ${weekEndDate.getDate()}, ${weekStart.getFullYear()}`;
+
+            let days = [];
+            for (let i = 0; i < 7; i++) {
+                let d = new Date(weekStart);
+                d.setDate(d.getDate() + i);
+                days.push(d);
+                const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                document.getElementById(`day-${i}`).innerHTML = `${dayNames[i]}<br><small style="color:var(--primary);font-size:0.9em;font-weight:700;">${d.getDate()}</small>`;
+            }
+
+            if (habits.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No habits found. Add your first habit above!</td></tr>`;
+                return;
+            }
+
+            habits.forEach(habit => {
+                const tr = document.createElement('tr');
+                let tdHtml = `
+                    <td><span class="editable" contenteditable="true" onblur="updateHabitName(${habit.id}, this.innerText)">${habit.name}</span></td>
+                    <td><span class="goal-cell editable" contenteditable="true" onblur="updateHabitGoal(${habit.id}, this.innerText)">${habit.goal}</span></td>
+                `;
+
+                days.forEach(dayDate => {
+                    const dateStr = formatDate(dayDate);
+                    const isCompleted = habit.completions[dateStr];
+                    const checkboxId = `chk-${habit.id}-${dateStr}`;
+                    const isToday = formatDate(new Date()) === dateStr;
+                    const tdStyle = isToday ? 'background: #f0fdf4;' : '';
+                    
+                    tdHtml += `
+                        <td style="${tdStyle}">
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="${checkboxId}" ${isCompleted ? 'checked' : ''} onchange="toggleHabit(${habit.id}, '${dateStr}')">
+                                <label for="${checkboxId}"></label>
+                            </div>
+                        </td>
+                    `;
+                });
+
+                tdHtml += `
+                    <td>
+                        <div class="actions">
+                            <button class="btn-icon" onclick="deleteHabit(${habit.id})">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tr.innerHTML = tdHtml;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.target.classList.contains('editable') && e.key === 'Enter') {
+                e.preventDefault(); e.target.blur();
+            }
+        });
+    </script>
+</body>
+</html>

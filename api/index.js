@@ -1,6 +1,6 @@
 const express = require('express');
 const { createPool } = require('@vercel/postgres');
-const sql = createPool({
+const pool = createPool({
     connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.NEON_DATABASE_URL
 });
 const bcrypt = require('bcrypt');
@@ -28,12 +28,12 @@ const authenticateToken = (req, res, next) => {
 // API: Init DB (Run this endpoint once to create tables)
 app.get('/api/init', async (req, res) => {
     try {
-        await sql`CREATE TABLE IF NOT EXISTS users (
+        await pool.sql`CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             username VARCHAR(255) UNIQUE NOT NULL,
             password VARCHAR(255) NOT NULL
         )`;
-        await sql`CREATE TABLE IF NOT EXISTS user_data (
+        await pool.sql`CREATE TABLE IF NOT EXISTS user_data (
             user_id INTEGER PRIMARY KEY,
             habits_json TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
@@ -51,7 +51,7 @@ app.post('/api/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        await sql`INSERT INTO users (username, password) VALUES (${username}, ${hashedPassword})`;
+        await pool.sql`INSERT INTO users (username, password) VALUES (${username}, ${hashedPassword})`;
         res.status(201).json({ message: 'User created successfully' });
     } catch (err) {
         if (err.message.includes('unique constraint')) {
@@ -66,7 +66,7 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     
     try {
-        const { rows } = await sql`SELECT * FROM users WHERE username = ${username}`;
+        const { rows } = await pool.sql`SELECT * FROM users WHERE username = ${username}`;
         if (rows.length === 0) return res.status(400).json({ error: 'Cannot find user' });
         
         const user = rows[0];
@@ -84,7 +84,7 @@ app.post('/api/login', async (req, res) => {
 // API: Get Habits
 app.get('/api/habits', authenticateToken, async (req, res) => {
     try {
-        const { rows } = await sql`SELECT habits_json FROM user_data WHERE user_id = ${req.user.id}`;
+        const { rows } = await pool.sql`SELECT habits_json FROM user_data WHERE user_id = ${req.user.id}`;
         if (rows.length > 0 && rows[0].habits_json) {
             res.json(JSON.parse(rows[0].habits_json));
         } else {
@@ -100,7 +100,7 @@ app.post('/api/habits', authenticateToken, async (req, res) => {
     const habitsJson = JSON.stringify(req.body);
     
     try {
-        await sql`
+        await pool.sql`
             INSERT INTO user_data (user_id, habits_json) 
             VALUES (${req.user.id}, ${habitsJson})
             ON CONFLICT (user_id) DO UPDATE SET habits_json = EXCLUDED.habits_json

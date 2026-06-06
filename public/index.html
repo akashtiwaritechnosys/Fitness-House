@@ -715,7 +715,28 @@
                 if (habit.completions[dateStr]) delete habit.completions[dateStr];
                 else habit.completions[dateStr] = true;
                 saveHabits();
-                render();
+                
+                // Targeted DOM Updates
+                const streak = getStreak(habit);
+                const streakBadge = document.getElementById(`streak-badge-${habit.id}`);
+                if (streakBadge) {
+                    if (streak > 0) {
+                        streakBadge.textContent = `🔥 ${streak}`;
+                        streakBadge.title = `${streak} Day Streak!`;
+                        streakBadge.style.display = 'inline-block';
+                    } else {
+                        streakBadge.style.display = 'none';
+                    }
+                }
+                
+                const timerSpan = document.getElementById(`timer-${habit.id}-${dateStr}`);
+                if (timerSpan) {
+                    timerSpan.style.display = habit.completions[dateStr] ? 'none' : 'block';
+                }
+                
+                updateXP();
+                const activeHabits = habits.filter(h => !h.archived && (currentCategory === 'All' || h.category === currentCategory));
+                updateProgress(activeHabits);
             }
         }
 
@@ -985,7 +1006,7 @@
                 tr.addEventListener('drop', (e) => drop(e, habit.id));
 
                 const streak = getStreak(habit);
-                const streakHtml = streak > 0 ? `<span class="streak-badge" title="${streak} Day Streak!">🔥 ${streak}</span>` : '';
+                const streakHtml = `<span id="streak-badge-${habit.id}" class="streak-badge" title="${streak} Day Streak!" style="display: ${streak > 0 ? 'inline-block' : 'none'};">🔥 ${streak}</span>`;
                 const catEmoji = CAT_EMOJIS[habit.category || 'General'];
                 
                 let tdHtml = `
@@ -1019,8 +1040,8 @@
                         if (isToday && document.body.classList.contains('dark-mode')) tdStyle = 'background: rgba(72, 187, 120, 0.15);';
                         
                         let timerHtml = '';
-                        if (isToday && !isCompleted) {
-                            timerHtml = `<div class="timer-indicator" onclick="openTimer(${habit.id}, '${dateStr}')" title="Start Focus Timer">⏱️</div>`;
+                        if (isToday) {
+                            timerHtml = `<div id="timer-${habit.id}-${dateStr}" class="timer-indicator" onclick="openTimer(${habit.id}, '${dateStr}')" title="Start Focus Timer" style="display: ${isCompleted ? 'none' : 'block'};">⏱️</div>`;
                         }
 
                         tdHtml += `

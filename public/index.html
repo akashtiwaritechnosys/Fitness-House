@@ -374,18 +374,25 @@
 
     <!-- Category Manager Modal -->
     <div class="auth-overlay" id="categoryModal" style="display: none; z-index: 2500;">
-        <div class="auth-card" style="max-width: 500px;">
-            <h2 style="margin-bottom: 1.5rem;">🏷️ Manage Categories</h2>
-            <div id="categoryList" style="margin-bottom: 1.5rem; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;"></div>
-            
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                <input type="text" id="newCatEmoji" placeholder="Emoji (e.g. 🍎)" style="width: 80px; margin: 0; padding: 0.5rem;">
-                <input type="text" id="newCatName" placeholder="Category Name" style="flex: 1; margin: 0; padding: 0.5rem;">
-                <button onclick="addCategory()" style="padding: 0.5rem 1rem;">Add</button>
+        <div class="auth-card" style="max-width: 500px; border-radius: 30px; padding: 3rem 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="margin: 0; font-size: 2rem;">🏷️ Categories</h2>
+                <button onclick="document.getElementById('categoryModal').style.display='none'" class="secondary-btn" style="width: auto; margin: 0; padding: 0.5rem 1rem; border-radius: 20px;">Close</button>
             </div>
             
-            <div style="text-align: right;">
-                <button onclick="document.getElementById('categoryModal').style.display='none'" class="secondary-btn">Close</button>
+            <div id="categoryList" style="margin-bottom: 2rem; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; padding-right: 0.5rem;"></div>
+            
+            <div style="background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-color);">
+                <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem;">Create New</h3>
+                <div style="display: flex; gap: 0.8rem;">
+                    <div style="position: relative; width: 70px;">
+                        <input type="text" id="newCatEmoji" placeholder="🔴" style="width: 100%; margin: 0; padding: 0.8rem; text-align: center; font-size: 1.2rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-main);">
+                    </div>
+                    <div style="flex: 1; position: relative;">
+                        <input type="text" id="newCatName" placeholder="Category Name" style="width: 100%; margin: 0; padding: 0.8rem; border-radius: 12px; padding-right: 80px; border: 1px solid var(--border-color); background: var(--bg-main);">
+                        <button onclick="addCategory()" style="position: absolute; right: 4px; top: 4px; bottom: 4px; margin: 0; padding: 0 1rem; border-radius: 8px; width: auto;">Add</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1105,9 +1112,14 @@
             let html = '';
             categories.forEach((cat, index) => {
                 html += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div><span style="font-size: 1.2rem; margin-right: 0.5rem;">${cat.emoji}</span> <b>${cat.name}</b></div>
-                        <button class="btn-icon" onclick="deleteCategory(${index})" title="Delete Category" style="color: var(--danger);">✖</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 1rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0,0,0,0.04); display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">${cat.emoji}</div>
+                            <b style="font-size: 1.1rem; color: var(--text-main);">${cat.name}</b>
+                        </div>
+                        <button class="secondary-btn danger-btn" onclick="deleteCategory(${index})" title="Delete Category" style="width: auto; margin: 0; padding: 0.5rem; border-radius: 50%; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
                     </div>
                 `;
             });

@@ -1,5 +1,8 @@
 const express = require('express');
-const { sql } = require('@vercel/postgres');
+const { createPool } = require('@vercel/postgres');
+const sql = createPool({
+    connectionString: process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.NEON_DATABASE_URL
+});
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');

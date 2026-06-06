@@ -192,6 +192,34 @@
         }
         body.dark-mode .controls { background: rgba(0,0,0,0.2); }
         
+        /* --- UX Enhancements --- */
+        #toastContainer {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none;
+        }
+        .toast {
+            background: rgba(15, 23, 42, 0.9); color: white; padding: 12px 24px; border-radius: 30px;
+            font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px); transform: translateY(50px); opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: rgba(220, 38, 38, 0.9); }
+        .toast.success { background: rgba(5, 150, 105, 0.9); }
+
+        tbody tr.drag-over { background: rgba(102, 126, 234, 0.15); box-shadow: inset 0 0 0 2px var(--primary); transform: scale(1.02); }
+
+        .skeleton-loader {
+            display: flex; flex-direction: column; gap: 10px; padding: 2rem;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .skeleton-row { height: 40px; background: rgba(0,0,0,0.05); border-radius: 10px; width: 100%; }
+        body.dark-mode .skeleton-row { background: rgba(255,255,255,0.05); }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
         .week-nav { display: flex; gap: 1rem; align-items: center; font-weight: 600; }
         .week-nav button { background: transparent; color: var(--text-main); padding: 0.5rem 1rem; border: 1px solid var(--border-inner); font-size: 0.9rem; box-shadow: none; }
         .week-nav button:hover { background: rgba(0,0,0,0.05); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
@@ -344,6 +372,9 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
     <!-- Main App -->
     <div class="container" id="appContainer">
         <div class="header">
@@ -401,6 +432,11 @@
         </div>
 
         <div class="table-container">
+            <div id="skeletonLoader" class="skeleton-loader" style="display: none;">
+                <div class="skeleton-row"></div>
+                <div class="skeleton-row" style="width: 80%"></div>
+                <div class="skeleton-row" style="width: 90%"></div>
+            </div>
             <table id="trackerTable">
                 <thead>
                     <tr>
@@ -451,6 +487,21 @@
         let weekStart = new Date(currentDate.setDate(diff));
         weekStart.setHours(0,0,0,0);
 
+        // --- UX Functions ---
+        function showToast(message, type = 'default') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         // --- Init ---
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
@@ -478,7 +529,7 @@
         async function handleAuth() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-            if(!u || !p) return alert('Fill all fields');
+            if(!u || !p) return showToast('Fill all fields', 'error');
 
             const endpoint = isLoginMode ? '/api/login' : '/api/register';
             
@@ -505,10 +556,10 @@
                     if (userRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-block';
                     fetchHabits();
                 } else {
-                    alert('Registration successful! Please login.');
+                    showToast('Registration successful! Please login.', 'success');
                     switchAuthMode();
                 }
-            } catch(e) { alert(e.message); }
+            } catch(e) { showToast(e.message, 'error'); }
         }
 
         function logout() {
@@ -531,6 +582,8 @@
         // --- Data Functions ---
         async function fetchHabits() {
             try {
+                document.getElementById('trackerTable').style.display = 'none';
+                document.getElementById('skeletonLoader').style.display = 'flex';
                 const res = await fetch('/api/habits', { headers: { 'Authorization': `Bearer ${token}` } });
                 if(res.status === 401 || res.status === 403) return logout();
                 const data = await res.json();
@@ -540,6 +593,7 @@
                 
                 habits = appData.habits || [];
                 moods = appData.moods || {};
+                previousLevel = Math.floor((appData.xp || 0) / 100) + 1;
                 
                 if(habits.length === 0) {
                     habits = [
@@ -549,9 +603,15 @@
                     appData.habits = habits;
                     saveHabits();
                 }
+                document.getElementById('skeletonLoader').style.display = 'none';
+                document.getElementById('trackerTable').style.display = 'table';
                 renderFilters();
                 render();
-            } catch (e) { console.error('Failed to fetch', e); }
+            } catch (e) { 
+                document.getElementById('skeletonLoader').style.display = 'none';
+                document.getElementById('trackerTable').style.display = 'table';
+                showToast('Failed to load data', 'error');
+            }
         }
 
         async function saveHabits() {
@@ -561,17 +621,18 @@
                     Object.values(h.completions || {}).forEach(val => { if (val) totalXp += 10; });
                 });
                 appData.xp = totalXp;
+                appData.habits = habits;
 
                 await fetch('/api/habits', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(appData)
                 });
-            } catch (e) { console.error('Failed to save', e); }
+            } catch (e) { showToast('Failed to save data', 'error'); }
         }
 
         function exportCSV() {
-            if (habits.length === 0) return alert("No data to export.");
+            if (habits.length === 0) return showToast("No data to export.", "error");
             let csv = "Habit Name,Category,Frequency,Archived,Date,Completed,Note\n";
             habits.forEach(habit => {
                 let allDates = new Set();
@@ -623,12 +684,13 @@
                 saveHabits();
                 nameInput.value = '';
                 render();
+                showToast('Habit added!', 'success');
             }
         }
 
         function archiveHabit(id) {
             const habit = habits.find(h => h.id === id);
-            if (habit) { habit.archived = true; saveHabits(); render(); }
+            if (habit) { habit.archived = true; saveHabits(); render(); showToast('Habit archived'); }
         }
         
         function unarchiveHabit(id) {
@@ -642,6 +704,7 @@
                 appData.habits = habits;
                 saveHabits();
                 render();
+                showToast('Habit deleted', 'error');
                 if(isArchivedList) openArchiveModal();
             }
         }
@@ -726,23 +789,11 @@
             else if (habit) render();
         }
 
-        function resetData() {
-            if (confirm("Are you sure? This will delete all your personal habit data from the database.")) {
-                appData = { habits: [], moods: {}, xp: 0 };
-                habits = appData.habits;
-                moods = appData.moods;
-                saveHabits();
-                renderFilters();
-                render();
-            }
-        }
-
         // --- Drag and Drop ---
         let draggedHabitId = null;
         function dragStart(e, id) {
             draggedHabitId = id;
             e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', id); 
             setTimeout(() => e.target.classList.remove('dragging'), 0);
         }
@@ -750,6 +801,7 @@
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             const tbody = document.getElementById('habitList');
+            if(!tbody) return;
             const afterElement = getDragAfterElement(tbody, e.clientY);
             const draggable = document.querySelector('.dragging');
             if (draggable) {
@@ -782,7 +834,7 @@
                 else return closest;
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
-
+        
         // --- Filters & Gamification ---
         function setFilter(cat) {
             activeFilter = cat;
@@ -799,28 +851,37 @@
             container.innerHTML = html;
         }
 
+        let previousLevel = 1;
         function updateXP() {
             let xp = 0;
             habits.forEach(h => { Object.values(h.completions || {}).forEach(val => { if (val) xp += 10; }); });
-            const level = Math.floor(xp / 100) + 1;
-            const currentLevelXP = xp % 100;
+            appData.xp = xp;
+            const currentLevel = Math.floor(xp / 100) + 1;
+            
+            if (currentLevel > previousLevel && previousLevel !== 1) {
+                if (typeof confetti === 'function') {
+                    confetti({ particleCount: 300, spread: 160, origin: { y: 0.3 } });
+                    showToast(`🎉 Level Up! Level ${currentLevel}!`, 'success');
+                }
+            }
+            previousLevel = currentLevel;
+
             const levelDisplay = document.getElementById('levelDisplay');
             if (levelDisplay) {
-                levelDisplay.textContent = `Level ${level} 🌟`;
-                levelDisplay.title = `${currentLevelXP}/100 XP to Level ${level + 1}`;
+                levelDisplay.textContent = `Level ${currentLevel} 🌟`;
+                levelDisplay.title = `${xp % 100}/100 XP to Level ${currentLevel + 1}`;
             }
         }
 
         function getStreak(habit) {
             let streak = 0;
             let checkDate = new Date();
-            let todayStr = formatDate(checkDate);
             let yesterday = new Date(checkDate);
             yesterday.setDate(yesterday.getDate() - 1);
             let yesterdayStr = formatDate(yesterday);
             
-            if (!habit.completions[todayStr] && !habit.completions[yesterdayStr]) return 0;
-            if (!habit.completions[todayStr] && habit.completions[yesterdayStr]) checkDate.setDate(checkDate.getDate() - 1);
+            if (!habit.completions[formatDate(checkDate)] && !habit.completions[yesterdayStr]) return 0;
+            if (!habit.completions[formatDate(checkDate)] && habit.completions[yesterdayStr]) checkDate.setDate(checkDate.getDate() - 1);
             
             while(true) {
                 if (habit.completions[formatDate(checkDate)]) {
@@ -832,7 +893,7 @@
         }
 
         function updateProgress(activeHabits) {
-            if (activeHabits.length === 0) {
+            if (!activeHabits || activeHabits.length === 0) {
                 const bar = document.getElementById('dailyProgress');
                 if(bar) bar.style.width = '0%';
                 return;
@@ -842,8 +903,8 @@
             let totalExpected = 0;
             let completed = 0;
             activeHabits.forEach(h => {
-                let shouldShow = true;
                 const freq = h.frequency || 'Everyday';
+                let shouldShow = true;
                 if (freq === 'Weekdays' && (dayNum === 0 || dayNum === 6)) shouldShow = false;
                 if (freq === 'Weekends' && (dayNum !== 0 && dayNum !== 6)) shouldShow = false;
                 if(shouldShow) {
@@ -852,9 +913,7 @@
                 }
             });
             
-            let percent = 0;
-            if (totalExpected > 0) percent = (completed / totalExpected) * 100;
-            
+            let percent = totalExpected > 0 ? (completed / totalExpected) * 100 : 0;
             const bar = document.getElementById('dailyProgress');
             const text = document.getElementById('progressText');
             
@@ -895,7 +954,10 @@
             updateProgress(activeHabits);
 
             if (activeHabits.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="empty-state">No habits match this view. Add a habit or change your filter!</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="empty-state">
+                    <div style="font-size: 3rem;">🌱</div>
+                    <div>Your habits list is empty! Add a habit to start tracking.</div>
+                </td></tr>`;
                 return;
             }
 

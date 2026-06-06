@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Habit Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -334,6 +335,21 @@
 </head>
 <body>
 
+    <!-- Chart Modal -->
+    <div class="auth-overlay" id="chartModal" style="display: none; z-index: 2000;">
+        <div class="auth-card" style="max-width: 800px; width: 95%;">
+            <h2>Your Progress</h2>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
+                <button onclick="renderChart('weekly')" id="btnWeekly" class="secondary-btn" style="background: var(--primary); color: white;">Weekly</button>
+                <button onclick="renderChart('monthly')" id="btnMonthly" class="secondary-btn">Monthly</button>
+            </div>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="progressChart"></canvas>
+            </div>
+            <button class="secondary-btn" onclick="document.getElementById('chartModal').style.display='none'" style="margin-top: 1.5rem;">Close</button>
+        </div>
+    </div>
+
     <!-- Auth Modal -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card">
@@ -366,7 +382,8 @@
                 <span id="currentWeekLabel" style="min-width: 180px; text-align: center;">Week of ...</span>
                 <button onclick="changeWeek(1)">Next →</button>
             </div>
-            <div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <button class="secondary-btn" onclick="openChartModal()" style="border-color: var(--primary); color: var(--primary);">📈 View Progress</button>
                 <button class="secondary-btn" onclick="resetData()">Clear All Data</button>
             </div>
         </div>
@@ -640,6 +657,87 @@
                 e.preventDefault(); e.target.blur();
             }
         });
+
+        // --- Charting Logic ---
+        let chartInstance = null;
+
+        function openChartModal() {
+            document.getElementById('chartModal').style.display = 'flex';
+            renderChart('weekly');
+        }
+
+        function renderChart(type) {
+            document.getElementById('btnWeekly').style.background = type === 'weekly' ? 'var(--primary)' : 'white';
+            document.getElementById('btnWeekly').style.color = type === 'weekly' ? 'white' : 'var(--text-main)';
+            document.getElementById('btnMonthly').style.background = type === 'monthly' ? 'var(--primary)' : 'white';
+            document.getElementById('btnMonthly').style.color = type === 'monthly' ? 'white' : 'var(--text-main)';
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            let labels = [];
+            let dataPoints = [];
+
+            if (type === 'weekly') {
+                for(let i=4; i>=0; i--) {
+                    let d = new Date();
+                    d.setDate(d.getDate() - (i*7));
+                    let day = d.getDay();
+                    let diff = d.getDate() - day + (day == 0 ? -6 : 1);
+                    let ws = new Date(d);
+                    ws.setDate(diff);
+                    labels.push(`Week ${ws.getDate()}/${ws.getMonth()+1}`);
+                    
+                    let completed = 0;
+                    habits.forEach(h => {
+                        for(let j=0; j<7; j++) {
+                            let curr = new Date(ws);
+                            curr.setDate(curr.getDate() + j);
+                            if(h.completions[formatDate(curr)]) completed++;
+                        }
+                    });
+                    dataPoints.push(completed);
+                }
+            } else {
+                for(let i=5; i>=0; i--) {
+                    let d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    labels.push(monthNames[d.getMonth()]);
+
+                    let completed = 0;
+                    habits.forEach(h => {
+                        Object.keys(h.completions).forEach(dateStr => {
+                            let cd = new Date(dateStr);
+                            if (cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear()) {
+                                completed++;
+                            }
+                        });
+                    });
+                    dataPoints.push(completed);
+                }
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Habits Completed',
+                        data: dataPoints,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#667eea',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
     </script>
 </body>
 </html>

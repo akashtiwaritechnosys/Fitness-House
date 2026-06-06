@@ -372,6 +372,24 @@
         </div>
     </div>
 
+    <!-- Category Manager Modal -->
+    <div class="auth-overlay" id="categoryModal" style="display: none; z-index: 2500;">
+        <div class="auth-card" style="max-width: 500px;">
+            <h2 style="margin-bottom: 1.5rem;">🏷️ Manage Categories</h2>
+            <div id="categoryList" style="margin-bottom: 1.5rem; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+            
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                <input type="text" id="newCatEmoji" placeholder="Emoji (e.g. 🍎)" style="width: 80px; margin: 0; padding: 0.5rem;">
+                <input type="text" id="newCatName" placeholder="Category Name" style="flex: 1; margin: 0; padding: 0.5rem;">
+                <button onclick="addCategory()" style="padding: 0.5rem 1rem;">Add</button>
+            </div>
+            
+            <div style="text-align: right;">
+                <button onclick="document.getElementById('categoryModal').style.display='none'" class="secondary-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Note Modal -->
     <div class="auth-overlay" id="noteModal" style="display: none; z-index: 2500;">
         <div class="auth-card" style="max-width: 500px;">
@@ -384,23 +402,53 @@
         </div>
     </div>
 
-    <!-- Chart Modal -->
+    <!-- Advanced Analytics Dashboard -->
     <div class="auth-overlay" id="chartModal" style="display: none; z-index: 2000;">
-        <div class="auth-card" style="max-width: 800px; width: 95%;">
-            <h2>Your Progress</h2>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                <button onclick="renderChart('daily')" id="btnDaily" class="secondary-btn" style="background: var(--primary); color: white; width: auto; margin-top: 0;">Daily</button>
-                <button onclick="renderChart('weekly')" id="btnWeekly" class="secondary-btn" style="width: auto; margin-top: 0;">Weekly</button>
-                <button onclick="renderChart('monthly')" id="btnMonthly" class="secondary-btn" style="width: auto; margin-top: 0;">Monthly</button>
-                <button onclick="renderChart('heatmap')" id="btnHeatmap" class="secondary-btn" style="width: auto; margin-top: 0;">🔥 Heatmap</button>
+        <div class="auth-card" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 style="margin: 0; font-size: 2rem;">📊 Analytics Dashboard</h2>
+                <button onclick="document.getElementById('chartModal').style.display='none'" class="secondary-btn" style="width: auto; margin: 0; padding: 0.5rem 1rem;">Close</button>
             </div>
-            <div id="chartWrapper" style="position: relative; height: 300px; width: 100%;">
-                <canvas id="progressChart"></canvas>
+            
+            <!-- Key Metrics -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div style="background: rgba(0,0,0,0.03); padding: 1.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem;">TOTAL COMPLETIONS</div>
+                    <div id="statTotal" style="font-size: 2.5rem; font-weight: 900; color: var(--primary);">0</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.03); padding: 1.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem;">BEST STREAK</div>
+                    <div id="statStreak" style="font-size: 2.5rem; font-weight: 900; color: #ed8936;">0 🔥</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.03); padding: 1.5rem; border-radius: 20px; text-align: center; border: 1px solid var(--border-color);">
+                    <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem;">BEST DAY</div>
+                    <div id="statBestDay" style="font-size: 2.5rem; font-weight: 900; color: #48bb78;">-</div>
+                </div>
             </div>
-            <div id="heatmapContainer" style="display: none; width: 100%; max-height: 300px; overflow-x: auto; padding-bottom: 1rem; text-align: left;">
-                <!-- Heatmap squares -->
+
+            <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
+                <!-- 7 Day Trend -->
+                <div style="flex: 2; min-width: 300px; background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.2rem;">Weekly Trend</h3>
+                    <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Category Breakdown -->
+                <div style="flex: 1; min-width: 250px; background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center;">
+                    <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.2rem; align-self: flex-start;">By Category</h3>
+                    <div style="position: relative; height: 200px; width: 100%;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
             </div>
-            <button class="secondary-btn" onclick="document.getElementById('chartModal').style.display='none'" style="margin-top: 1.5rem; width: 100%;">Close</button>
+
+            <!-- Heatmap -->
+            <div style="background: rgba(0,0,0,0.02); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-color);">
+                <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.2rem;">30-Day Activity Heatmap</h3>
+                <div id="heatmapContainer" style="width: 100%; overflow-x: auto; padding-bottom: 0.5rem; text-align: left;"></div>
+            </div>
         </div>
     </div>
 
@@ -485,6 +533,7 @@
                         <button class="dropdown-item" onclick="openChartModal()">📈 View Progress</button>
                         <button class="dropdown-item" onclick="openArchiveModal()">📂 View Archive</button>
                         <button class="dropdown-item" onclick="exportCSV()">📊 Export CSV</button>
+                        <button class="dropdown-item" onclick="openCategoryManager()">🏷️ Manage Categories</button>
                         <button class="dropdown-item" onclick="toggleDarkMode()" id="darkModeBtn">🌙 Dark Mode</button>
                         <button class="dropdown-item" onclick="openTimer()">⏳ Focus Timer</button>
                         <div style="height: 1px; background: var(--border-inner); margin: 0.5rem 0;"></div>
@@ -559,11 +608,21 @@
         let viewingAsUserId = null;
         let viewingAsUsername = null;
         
-        let appData = { habits: [], moods: {}, xp: 0 };
+        let appData = { habits: [], moods: {}, xp: 0, categories: [] };
         let habits = [];
         let moods = {};
         const MOOD_EMOJIS = ['➖', '😞', '😐', '🙂', '🤩'];
-        const CAT_EMOJIS = { 'Health': '🔴', 'Work': '🔵', 'Mindfulness': '🟢', 'Personal': '🟡', 'General': '⚪' };
+        let categories = [
+            { name: 'Health', emoji: '🔴' },
+            { name: 'Work', emoji: '🔵' },
+            { name: 'Mindfulness', emoji: '🟢' },
+            { name: 'Personal', emoji: '🟡' },
+            { name: 'General', emoji: '⚪' }
+        ];
+        function getCatEmoji(name) {
+            const cat = categories.find(c => c.name === name);
+            return cat ? cat.emoji : '⚪';
+        }
         let activeFilter = 'All';
         
         let currentDate = new Date();
@@ -739,11 +798,18 @@
                 if(res.status === 401 || res.status === 403) return logout();
                 const data = await res.json();
                 
-                if (Array.isArray(data)) appData = { habits: data, moods: {}, xp: 0 };
+                if (Array.isArray(data)) appData = { habits: data, moods: {}, xp: 0, categories: [] };
                 else if (data && data.habits) appData = data;
                 
                 habits = appData.habits || [];
                 moods = appData.moods || {};
+                
+                if (appData.categories && appData.categories.length > 0) {
+                    categories = appData.categories;
+                } else {
+                    appData.categories = categories; // set defaults
+                }
+                
                 previousLevel = Math.floor((appData.xp || 0) / 100) + 1;
                 
                 if(habits.length === 0) {
@@ -904,7 +970,7 @@
             } else {
                 let html = '';
                 archived.forEach(h => {
-                    const emoji = CAT_EMOJIS[h.category || 'General'];
+                    const emoji = getCatEmoji(h.category || 'General');
                     html += `
                         <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; border-bottom:1px solid var(--border-color);">
                             <span style="font-weight:500;">${emoji} ${h.name}</span>
@@ -1022,10 +1088,74 @@
         function renderFilters() {
             const container = document.getElementById('filterContainer');
             let html = `<button class="filter-chip ${activeFilter==='All'?'active':''}" onclick="setFilter('All')">All</button>`;
-            Object.keys(CAT_EMOJIS).forEach(cat => {
-                html += `<button class="filter-chip ${activeFilter===cat?'active':''}" onclick="setFilter('${cat}')">${CAT_EMOJIS[cat]} ${cat}</button>`;
+            categories.forEach(cat => {
+                html += `<button class="filter-chip ${activeFilter===cat.name?'active':''}" onclick="setFilter('${cat.name}')">${cat.emoji} ${cat.name}</button>`;
             });
             container.innerHTML = html;
+        }
+
+        // --- Category Manager Logic ---
+        function openCategoryManager() {
+            renderCategoryManager();
+            document.getElementById('categoryModal').style.display = 'flex';
+        }
+
+        function renderCategoryManager() {
+            const list = document.getElementById('categoryList');
+            let html = '';
+            categories.forEach((cat, index) => {
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div><span style="font-size: 1.2rem; margin-right: 0.5rem;">${cat.emoji}</span> <b>${cat.name}</b></div>
+                        <button class="btn-icon" onclick="deleteCategory(${index})" title="Delete Category" style="color: var(--danger);">✖</button>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+            updateCategoryDropdowns();
+        }
+
+        function addCategory() {
+            if(viewingAsUserId) return showToast('Read-only Mode', 'error');
+            const emoji = document.getElementById('newCatEmoji').value.trim() || '⚪';
+            const name = document.getElementById('newCatName').value.trim();
+            if(!name) return showToast('Category name is required', 'error');
+            if(categories.find(c => c.name.toLowerCase() === name.toLowerCase())) return showToast('Category already exists', 'error');
+            
+            categories.push({ name, emoji });
+            appData.categories = categories;
+            saveHabits();
+            document.getElementById('newCatEmoji').value = '';
+            document.getElementById('newCatName').value = '';
+            renderCategoryManager();
+            renderFilters();
+            showToast('Category added', 'success');
+        }
+
+        function deleteCategory(index) {
+            if(viewingAsUserId) return showToast('Read-only Mode', 'error');
+            if(categories.length <= 1) return showToast('You must have at least one category', 'error');
+            if(confirm('Delete this category? (Habits using this category will remain but may lose their label).')) {
+                categories.splice(index, 1);
+                appData.categories = categories;
+                saveHabits();
+                renderCategoryManager();
+                renderFilters();
+                render();
+            }
+        }
+
+        function updateCategoryDropdowns() {
+            const select = document.getElementById('habitCategory');
+            if(select) {
+                let currentVal = select.value;
+                let html = '';
+                categories.forEach(cat => {
+                    html += `<option value="${cat.name}">${cat.emoji} ${cat.name}</option>`;
+                });
+                select.innerHTML = html;
+                if(categories.find(c => c.name === currentVal)) select.value = currentVal;
+            }
         }
 
         let previousLevel = 1;
@@ -1163,7 +1293,7 @@
 
                 const streak = getStreak(habit);
                 const streakHtml = `<span id="streak-badge-${habit.id}" class="streak-badge" title="${streak} Day Streak!" style="display: ${streak > 0 ? 'inline-block' : 'none'};">🔥 ${streak}</span>`;
-                const catEmoji = CAT_EMOJIS[habit.category || 'General'];
+                const catEmoji = getCatEmoji(habit.category || 'General');
                 
                 let tdHtml = `
                     <td style="cursor: grab;" title="Drag to reorder">
@@ -1450,86 +1580,67 @@
 
         // --- Charting Logic ---
         let chartInstance = null;
+        let categoryChartInstance = null;
 
         function openChartModal() {
             document.getElementById('chartModal').style.display = 'flex';
-            renderChart('daily');
+            renderDashboard();
         }
 
-        function renderChart(type) {
-            document.getElementById('btnDaily').style.background = type === 'daily' ? 'var(--primary)' : 'transparent';
-            document.getElementById('btnDaily').style.color = type === 'daily' ? 'white' : 'var(--text-main)';
-            document.getElementById('btnWeekly').style.background = type === 'weekly' ? 'var(--primary)' : 'transparent';
-            document.getElementById('btnWeekly').style.color = type === 'weekly' ? 'white' : 'var(--text-main)';
-            document.getElementById('btnMonthly').style.background = type === 'monthly' ? 'var(--primary)' : 'transparent';
-            document.getElementById('btnMonthly').style.color = type === 'monthly' ? 'white' : 'var(--text-main)';
-            document.getElementById('btnHeatmap').style.background = type === 'heatmap' ? 'var(--primary)' : 'transparent';
-            document.getElementById('btnHeatmap').style.color = type === 'heatmap' ? 'white' : 'var(--text-main)';
+        function renderDashboard() {
+            // 1. Calculate Key Metrics
+            let totalCompletions = 0;
+            let maxStreak = 0;
+            let completionsByDay = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+            let completionsByCategory = {};
 
-            if (type === 'heatmap') {
-                document.getElementById('chartWrapper').style.display = 'none';
-                document.getElementById('heatmapContainer').style.display = 'block';
-                renderHeatmap();
-                return;
-            }
-            
-            document.getElementById('heatmapContainer').style.display = 'none';
-            document.getElementById('chartWrapper').style.display = 'block';
+            habits.forEach(h => {
+                const streak = getStreak(h);
+                if (streak > maxStreak) maxStreak = streak;
+                
+                Object.keys(h.completions || {}).forEach(dateStr => {
+                    totalCompletions++;
+                    const d = new Date(dateStr);
+                    completionsByDay[d.getDay()]++;
+                    
+                    const cat = h.category || 'General';
+                    completionsByCategory[cat] = (completionsByCategory[cat] || 0) + 1;
+                });
+            });
 
-            const ctx = document.getElementById('progressChart').getContext('2d');
+            document.getElementById('statTotal').innerText = totalCompletions;
+            document.getElementById('statStreak').innerText = maxStreak + ' 🔥';
+
+            const dayNamesFull = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            let bestDayIdx = 0; let bestDayVal = 0;
+            Object.keys(completionsByDay).forEach(idx => {
+                if(completionsByDay[idx] > bestDayVal) { bestDayVal = completionsByDay[idx]; bestDayIdx = idx; }
+            });
+            document.getElementById('statBestDay').innerText = bestDayVal > 0 ? dayNamesFull[bestDayIdx] : '-';
+
+            // 2. Render Trend Chart (Last 7 Days)
+            const ctxTrend = document.getElementById('progressChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-
+            
             let labels = [];
             let dataPoints = [];
-
-            if (type === 'daily') {
-                for(let i=13; i>=0; i--) {
-                    let d = new Date(); d.setDate(d.getDate() - i);
-                    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                    labels.push(`${dayNames[d.getDay()]} ${d.getDate()}`);
-                    let completed = 0;
-                    habits.forEach(h => { if(h.completions[formatDate(d)]) completed++; });
-                    dataPoints.push(completed);
-                }
-            } else if (type === 'weekly') {
-                for(let i=4; i>=0; i--) {
-                    let d = new Date(); d.setDate(d.getDate() - (i*7));
-                    let day = d.getDay(); let diff = d.getDate() - day + (day == 0 ? -6 : 1);
-                    let ws = new Date(d); ws.setDate(diff);
-                    labels.push(`Week ${ws.getDate()}/${ws.getMonth()+1}`);
-                    let completed = 0;
-                    habits.forEach(h => {
-                        for(let j=0; j<7; j++) {
-                            let curr = new Date(ws); curr.setDate(curr.getDate() + j);
-                            if(h.completions[formatDate(curr)]) completed++;
-                        }
-                    });
-                    dataPoints.push(completed);
-                }
-            } else {
-                for(let i=5; i>=0; i--) {
-                    let d = new Date(); d.setMonth(d.getMonth() - i);
-                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                    labels.push(monthNames[d.getMonth()]);
-                    let completed = 0;
-                    habits.forEach(h => {
-                        Object.keys(h.completions).forEach(dateStr => {
-                            let cd = new Date(dateStr);
-                            if (cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear()) completed++;
-                        });
-                    });
-                    dataPoints.push(completed);
-                }
+            for(let i=6; i>=0; i--) {
+                let d = new Date(); d.setDate(d.getDate() - i);
+                const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                labels.push(`${dayNames[d.getDay()]} ${d.getDate()}`);
+                let completed = 0;
+                habits.forEach(h => { if(h.completions[formatDate(d)]) completed++; });
+                dataPoints.push(completed);
             }
 
             const isDark = document.body.classList.contains('dark-mode');
 
-            chartInstance = new Chart(ctx, {
+            chartInstance = new Chart(ctxTrend, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Total Habits Completed', data: dataPoints,
+                        label: 'Habits Completed', data: dataPoints,
                         backgroundColor: isDark ? 'rgba(129, 140, 248, 0.8)' : 'rgba(102, 126, 234, 0.8)',
                         borderColor: isDark ? '#818cf8' : '#667eea', borderWidth: 1, borderRadius: 6
                     }]
@@ -1537,12 +1648,42 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: { 
-                        y: { beginAtZero: true, ticks: { precision: 0, color: isDark ? '#a0aec0' : '#718096' } },
-                        x: { ticks: { color: isDark ? '#a0aec0' : '#718096' } }
+                        y: { beginAtZero: true, ticks: { precision: 0, color: isDark ? '#a0aec0' : '#718096' }, grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } },
+                        x: { ticks: { color: isDark ? '#a0aec0' : '#718096' }, grid: { display: false } }
                     },
-                    plugins: { legend: { labels: { color: isDark ? '#a0aec0' : '#718096' } } }
+                    plugins: { legend: { display: false } }
                 }
             });
+
+            // 3. Render Category Chart
+            const ctxCat = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            
+            const catLabels = Object.keys(completionsByCategory);
+            const catData = Object.values(completionsByCategory);
+            const bgColors = ['#fc8181', '#63b3ed', '#68d391', '#f6e05e', '#a0aec0', '#b794f4', '#f687b3'];
+
+            categoryChartInstance = new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels.length ? catLabels : ['None'],
+                    datasets: [{
+                        data: catData.length ? catData : [1],
+                        backgroundColor: catData.length ? bgColors : ['#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'right', labels: { color: isDark ? '#a0aec0' : '#718096' } }
+                    }
+                }
+            });
+
+            // 4. Render Heatmap
+            renderHeatmap();
         }
 
         function renderHeatmap() {

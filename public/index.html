@@ -109,15 +109,21 @@
             font-size: 1rem; outline: none; transition: all 0.3s ease; background: rgba(255,255,255,0.1); color: var(--text-main);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); backdrop-filter: blur(10px);
         }
+        select {
+            -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23667eea'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 1rem center; background-size: 1.2rem;
+            padding-right: 2.5rem !important; cursor: pointer;
+        }
         body.dark-mode input[type="text"], body.dark-mode input[type="number"], body.dark-mode select { background: rgba(0,0,0,0.2); }
         input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15); background: transparent; }
 
         button {
-            padding: 0.75rem 1.5rem; border: none; border-radius: 12px; background: var(--primary);
+            padding: 0.75rem 1.5rem; border: none; border-radius: 50px; background: linear-gradient(135deg, var(--primary), var(--primary-hover));
             color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
+            display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4), inset 0 2px 0 rgba(255,255,255,0.2);
         }
-        button:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5), inset 0 2px 0 rgba(255,255,255,0.2); filter: brightness(1.1); }
         button:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); }
 
         .table-container { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border-inner); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
@@ -187,12 +193,22 @@
         
         .controls {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
-            background: rgba(255,255,255,0.3); padding: 1rem 1.5rem; border-radius: 16px; border: 1px solid var(--border-inner);
+            background: rgba(255,255,255,0.3); padding: 1rem 1.5rem; border-radius: 20px; border: 1px solid var(--border-inner);
             backdrop-filter: blur(10px);
         }
         body.dark-mode .controls { background: rgba(0,0,0,0.2); }
         
         /* --- UX Enhancements --- */
+        .modal-close-btn {
+            position: absolute; top: 1rem; right: 1rem; 
+            background: rgba(0,0,0,0.05) !important; color: var(--text-muted) !important;
+            width: 36px !important; height: 36px !important; border-radius: 50% !important; padding: 0 !important;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: none !important; font-size: 1.2rem !important; transition: all 0.2s !important;
+            margin: 0 !important;
+        }
+        .modal-close-btn:hover { background: rgba(252,129,129,0.1) !important; color: var(--danger) !important; transform: scale(1.1) !important; }
+        body.dark-mode .modal-close-btn { background: rgba(255,255,255,0.1) !important; }
         #toastContainer {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none;
@@ -488,6 +504,24 @@
         weekStart.setHours(0,0,0,0);
 
         // --- UX Functions ---
+        function attachModalUX() {
+            document.querySelectorAll('.auth-overlay').forEach(overlay => {
+                if (overlay.id === 'authModal' || overlay.id === 'timerModal') return;
+                overlay.addEventListener('mousedown', function(e) {
+                    if (e.target === overlay) overlay.style.display = 'none';
+                });
+                const card = overlay.querySelector('.auth-card');
+                if (card && !card.querySelector('.modal-close-btn')) {
+                    card.style.position = 'relative';
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'modal-close-btn';
+                    closeBtn.innerHTML = '✖';
+                    closeBtn.onclick = () => overlay.style.display = 'none';
+                    card.appendChild(closeBtn);
+                }
+            });
+        }
+
         function showToast(message, type = 'default') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -507,6 +541,7 @@
             document.body.classList.add('dark-mode');
             document.getElementById('darkModeBtn').textContent = '☀️';
         }
+        attachModalUX();
 
         if (token) {
             document.getElementById('authOverlay').style.display = 'none';

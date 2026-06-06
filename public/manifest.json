@@ -1,0 +1,17 @@
+{
+    "name": "Fitness House Habit Tracker",
+    "short_name": "Habits",
+    "description": "A premium habit tracker to build your routine.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a202c",
+    "theme_color": "#667eea",
+    "icons": [
+      {
+        "src": "/icon.png",
+        "sizes": "192x192 512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ]
+  }

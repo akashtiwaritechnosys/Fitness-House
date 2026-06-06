@@ -32,6 +32,7 @@ app.use(express.json());
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user'`;
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS raw_password VARCHAR(255)`;
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_requested BOOLEAN DEFAULT false`;
+        await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT true`;
         await pool.sql`ALTER TABLE user_data ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0`;
     } catch(e) { console.error("Migration error:", e.message); }
 })();
@@ -71,9 +72,10 @@ app.post('/api/register', async (req, res) => {
         const { rows: countRows } = await pool.sql`SELECT COUNT(*) FROM users`;
         const isFirst = parseInt(countRows[0].count) === 0;
         const role = isFirst ? 'admin' : 'user';
+        const isApproved = isFirst ? true : false;
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.sql`INSERT INTO users (username, password, role, raw_password) VALUES (${username}, ${hashedPassword}, ${role}, ${password})`;
+        await pool.sql`INSERT INTO users (username, password, role, raw_password, is_approved) VALUES (${username}, ${hashedPassword}, ${role}, ${password}, ${isApproved})`;
         res.status(201).json({ message: 'User created successfully', role });
     } catch (err) {
         if (err.message.includes('unique constraint')) {
@@ -92,6 +94,10 @@ app.post('/api/login', async (req, res) => {
         if (rows.length === 0) return res.status(400).json({ error: 'Cannot find user' });
         
         const user = rows[0];
+        
+        if (!user.is_approved) {
+            return res.status(403).json({ error: 'Your account is pending Admin approval.' });
+        }
         
         if (await bcrypt.compare(password, user.password)) {
             const accessToken = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
@@ -156,7 +162,7 @@ app.get('/api/leaderboard', authenticateToken, requireAdmin, async (req, res) =>
 app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { rows } = await pool.sql`
-            SELECT u.id, u.username, u.role, u.raw_password, u.reset_requested, COALESCE(d.xp, 0) as xp
+            SELECT u.id, u.username, u.role, u.raw_password, u.reset_requested, u.is_approved, COALESCE(d.xp, 0) as xp
             FROM users u
             LEFT JOIN user_data d ON u.id = d.user_id
             ORDER BY u.id ASC
@@ -185,6 +191,17 @@ app.put('/api/admin/users/:id/role', authenticateToken, requireAdmin, async (req
         const targetId = req.params.id;
         await pool.sql`UPDATE users SET role = 'admin' WHERE id = ${targetId}`;
         res.json({ message: 'User promoted to admin' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API: Admin Approve User
+app.put('/api/admin/users/:id/approve', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const targetId = req.params.id;
+        await pool.sql`UPDATE users SET is_approved = true WHERE id = ${targetId}`;
+        res.json({ message: 'User approved' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

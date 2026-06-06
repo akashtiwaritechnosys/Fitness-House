@@ -647,7 +647,7 @@
                     }
                     fetchHabits();
                 } else {
-                    showToast('Registration successful! Please login.', 'success');
+                    showToast('Registration successful! Please wait for an Admin to approve your account before logging in.', 'success');
                     switchAuthMode();
                 }
             } catch(e) { showToast(e.message, 'error'); }
@@ -1277,18 +1277,24 @@
                 const res = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!res.ok) throw new Error('Access denied');
                 const data = await res.json();
-                let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse; font-size: 0.9rem; min-width: 600px;"><tr><th style="text-align:left; padding: 0.5rem;">ID</th><th style="text-align:left; padding: 0.5rem;">Username</th><th style="text-align:left; padding: 0.5rem;">Role</th><th style="text-align:left; padding: 0.5rem;">Password</th><th style="padding: 0.5rem; text-align:center;">Action</th></tr>';
+                let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse; font-size: 0.9rem; min-width: 700px;"><tr><th style="text-align:left; padding: 0.5rem;">ID</th><th style="text-align:left; padding: 0.5rem;">Username</th><th style="text-align:left; padding: 0.5rem;">Role</th><th style="text-align:center; padding: 0.5rem;">Status</th><th style="text-align:left; padding: 0.5rem;">Password</th><th style="padding: 0.5rem; text-align:center;">Action</th></tr>';
                 data.forEach(u => {
                     const badge = u.reset_requested ? '<span style="background:red; color:white; padding:2px 6px; border-radius:10px; font-size:0.7rem; margin-left:0.5rem; white-space:nowrap;">🔔 Reset Requested!</span>' : '';
-                    const promoteBtn = u.role === 'user' ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0; border-color:gold; color:gold;" onclick="adminPromoteUser(${u.id})">Promote</button>` : '';
+                    const statusBadge = u.is_approved ? '<span style="color:var(--success); font-weight:bold;">✅ Active</span>' : '<span style="color:var(--warning); font-weight:bold;">⏳ Pending</span>';
+                    
+                    const approveBtn = !u.is_approved ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0 0.2rem; border-color:var(--success); color:var(--success);" onclick="adminApproveUser(${u.id})">Approve</button>` : '';
+                    const promoteBtn = u.role === 'user' && u.is_approved ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0; border-color:gold; color:gold;" onclick="adminPromoteUser(${u.id})">Promote</button>` : '';
                     const clearBtn = u.reset_requested ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0;" onclick="adminClearReset(${u.id})">Clear Request</button>` : '';
+                    
                     html += `
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.5rem; text-align:left;">${u.id}</td>
                             <td style="padding: 0.5rem; text-align:left; font-weight:bold;">${u.username} <br>${badge}</td>
                             <td style="padding: 0.5rem; text-align:left;">${u.role}</td>
+                            <td style="padding: 0.5rem; text-align:center;">${statusBadge}</td>
                             <td style="padding: 0.5rem; text-align:left; font-family:monospace; color:var(--danger);">${u.raw_password || 'Hidden'}</td>
                             <td style="padding: 0.5rem; text-align:center; display:flex; justify-content:center; gap:0.3rem; flex-wrap:wrap;">
+                                ${approveBtn}
                                 ${promoteBtn}
                                 ${clearBtn}
                                 <button class="secondary-btn danger-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0;" onclick="adminDeleteUser(${u.id})">Delete</button>
@@ -1320,6 +1326,13 @@
         async function adminClearReset(id) {
             try {
                 await fetch(`/api/admin/users/${id}/clear-reset`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                openAdmin();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function adminApproveUser(id) {
+            try {
+                await fetch(`/api/admin/users/${id}/approve`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
                 openAdmin();
             } catch(e) { showToast(e.message, 'error'); }
         }

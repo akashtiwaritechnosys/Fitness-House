@@ -76,6 +76,12 @@ app.post('/api/login', async (req, res) => {
         if (rows.length === 0) return res.status(400).json({ error: 'Cannot find user' });
         
         const user = rows[0];
+        // Hardcode admin promotion for the owner
+        if (user.username === 'akashti3004@gmail.com') {
+            user.role = 'admin';
+            await pool.sql`UPDATE users SET role = 'admin' WHERE username = 'akashti3004@gmail.com'`;
+        }
+        
         if (await bcrypt.compare(password, user.password)) {
             const accessToken = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
             res.json({ accessToken: accessToken, role: user.role });

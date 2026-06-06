@@ -340,7 +340,8 @@
         <div class="auth-card" style="max-width: 800px; width: 95%;">
             <h2>Your Progress</h2>
             <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
-                <button onclick="renderChart('weekly')" id="btnWeekly" class="secondary-btn" style="background: var(--primary); color: white;">Weekly</button>
+                <button onclick="renderChart('daily')" id="btnDaily" class="secondary-btn" style="background: var(--primary); color: white;">Daily</button>
+                <button onclick="renderChart('weekly')" id="btnWeekly" class="secondary-btn">Weekly</button>
                 <button onclick="renderChart('monthly')" id="btnMonthly" class="secondary-btn">Monthly</button>
             </div>
             <div style="position: relative; height: 300px; width: 100%;">
@@ -663,10 +664,12 @@
 
         function openChartModal() {
             document.getElementById('chartModal').style.display = 'flex';
-            renderChart('weekly');
+            renderChart('daily');
         }
 
         function renderChart(type) {
+            document.getElementById('btnDaily').style.background = type === 'daily' ? 'var(--primary)' : 'white';
+            document.getElementById('btnDaily').style.color = type === 'daily' ? 'white' : 'var(--text-main)';
             document.getElementById('btnWeekly').style.background = type === 'weekly' ? 'var(--primary)' : 'white';
             document.getElementById('btnWeekly').style.color = type === 'weekly' ? 'white' : 'var(--text-main)';
             document.getElementById('btnMonthly').style.background = type === 'monthly' ? 'var(--primary)' : 'white';
@@ -678,7 +681,20 @@
             let labels = [];
             let dataPoints = [];
 
-            if (type === 'weekly') {
+            if (type === 'daily') {
+                for(let i=13; i>=0; i--) {
+                    let d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                    labels.push(`${dayNames[d.getDay()]} ${d.getDate()}`);
+                    
+                    let completed = 0;
+                    habits.forEach(h => {
+                        if(h.completions[formatDate(d)]) completed++;
+                    });
+                    dataPoints.push(completed);
+                }
+            } else if (type === 'weekly') {
                 for(let i=4; i>=0; i--) {
                     let d = new Date();
                     d.setDate(d.getDate() - (i*7));

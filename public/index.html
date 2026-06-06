@@ -254,6 +254,10 @@
             </div>
         </div>
         
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); padding: 0 0.5rem;">
+            <span>Today's Progress</span>
+            <span id="progressText">0%</span>
+        </div>
         <div class="progress-container" title="Today's Progress">
             <div class="progress-bar" id="dailyProgress"></div>
         </div>
@@ -543,17 +547,22 @@
             });
             const percent = (completed / habits.length) * 100;
             const bar = document.getElementById('dailyProgress');
+            const text = document.getElementById('progressText');
             
             const oldWidth = bar.style.width;
             bar.style.width = percent + '%';
+            if (text) text.textContent = Math.round(percent) + '%';
             
             if (percent === 100 && oldWidth !== '100%' && oldWidth !== '') {
-                confetti({
-                    particleCount: 150,
-                    spread: 80,
-                    origin: { y: 0.6 },
-                    colors: ['#667eea', '#764ba2', '#48bb78', '#f56565', '#ed8936']
-                });
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#667eea', '#764ba2', '#48bb78', '#f56565', '#ed8936'],
+                        zIndex: 3000
+                    });
+                }
             }
         }
 

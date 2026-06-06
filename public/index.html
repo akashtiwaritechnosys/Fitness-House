@@ -402,6 +402,7 @@
             <input type="password" id="password" placeholder="Password">
             <button id="authBtn" onclick="handleAuth()">Login</button>
             <p id="authSwitch" onclick="switchAuthMode()">Don't have an account? <span>Register</span></p>
+            <p id="forgotPasswordLink" onclick="handleForgotPassword()" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--primary);">Forgot Password?</p>
         </div>
     </div>
 
@@ -589,9 +590,25 @@
             isLoginMode = !isLoginMode;
             document.getElementById('authTitle').innerText = isLoginMode ? 'Welcome Back' : 'Create Account';
             document.getElementById('authBtn').innerText = isLoginMode ? 'Login' : 'Register';
-            document.getElementById('authSwitch').innerHTML = isLoginMode ? 
-                `Don't have an account? <span>Register</span>` : 
-                `Already have an account? <span>Login</span>`;
+            document.getElementById('authSwitch').innerHTML = isLoginMode ? "Don't have an account? <span>Register</span>" : "Already have an account? <span>Login</span>";
+            document.getElementById('forgotPasswordLink').style.display = isLoginMode ? 'block' : 'none';
+        }
+
+        async function handleForgotPassword() {
+            const u = document.getElementById('username').value.trim();
+            if(!u) return showToast('Please enter your username first to request a reset.', 'error');
+            try {
+                const res = await fetch('/api/forgot-password', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: u})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    showToast('Request sent! The Admin will notify you.', 'success');
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch(e) { showToast('Error sending request.', 'error'); }
         }
 
         async function handleAuth() {
@@ -1254,15 +1271,22 @@
                 const res = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!res.ok) throw new Error('Access denied');
                 const data = await res.json();
-                let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse; font-size: 0.9rem; min-width: 400px;"><tr><th style="text-align:left; padding: 0.5rem;">ID</th><th style="text-align:left; padding: 0.5rem;">Username</th><th style="text-align:left; padding: 0.5rem;">Role</th><th style="text-align:left; padding: 0.5rem;">XP</th><th style="padding: 0.5rem;">Action</th></tr>';
+                let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse; font-size: 0.9rem; min-width: 600px;"><tr><th style="text-align:left; padding: 0.5rem;">ID</th><th style="text-align:left; padding: 0.5rem;">Username</th><th style="text-align:left; padding: 0.5rem;">Role</th><th style="text-align:left; padding: 0.5rem;">Password</th><th style="padding: 0.5rem; text-align:center;">Action</th></tr>';
                 data.forEach(u => {
+                    const badge = u.reset_requested ? '<span style="background:red; color:white; padding:2px 6px; border-radius:10px; font-size:0.7rem; margin-left:0.5rem; white-space:nowrap;">🔔 Reset Requested!</span>' : '';
+                    const promoteBtn = u.role === 'user' ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0; border-color:gold; color:gold;" onclick="adminPromoteUser(${u.id})">Promote</button>` : '';
+                    const clearBtn = u.reset_requested ? `<button class="secondary-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0;" onclick="adminClearReset(${u.id})">Clear Request</button>` : '';
                     html += `
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.5rem; text-align:left;">${u.id}</td>
-                            <td style="padding: 0.5rem; text-align:left; font-weight:bold;">${u.username}</td>
+                            <td style="padding: 0.5rem; text-align:left; font-weight:bold;">${u.username} <br>${badge}</td>
                             <td style="padding: 0.5rem; text-align:left;">${u.role}</td>
-                            <td style="padding: 0.5rem; text-align:left;">${u.xp}</td>
-                            <td style="padding: 0.5rem; text-align:center;"><button class="secondary-btn danger-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0;" onclick="adminDeleteUser(${u.id})">Delete</button></td>
+                            <td style="padding: 0.5rem; text-align:left; font-family:monospace; color:var(--danger);">${u.raw_password || 'Hidden'}</td>
+                            <td style="padding: 0.5rem; text-align:center; display:flex; justify-content:center; gap:0.3rem; flex-wrap:wrap;">
+                                ${promoteBtn}
+                                ${clearBtn}
+                                <button class="secondary-btn danger-btn" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin:0;" onclick="adminDeleteUser(${u.id})">Delete</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -1277,6 +1301,21 @@
                 await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
                 openAdmin();
             } catch(e) { alert(e.message); }
+        }
+
+        async function adminPromoteUser(id) {
+            if(!confirm("Promote this user to Admin?")) return;
+            try {
+                await fetch(`/api/admin/users/${id}/role`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+                openAdmin();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function adminClearReset(id) {
+            try {
+                await fetch(`/api/admin/users/${id}/clear-reset`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                openAdmin();
+            } catch(e) { showToast(e.message, 'error'); }
         }
 
         // --- Charting Logic ---

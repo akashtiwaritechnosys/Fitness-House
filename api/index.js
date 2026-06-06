@@ -30,6 +30,8 @@ app.use(express.json());
         )`;
         // In case tables already existed, add columns
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user'`;
+        await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS raw_password VARCHAR(255)`;
+        await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_requested BOOLEAN DEFAULT false`;
         await pool.sql`ALTER TABLE user_data ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0`;
     } catch(e) { console.error("Migration error:", e.message); }
 })();
@@ -46,6 +48,20 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const requireAdmin = async (req, res, next) => {
+    if (req.user.role !== 'admin') {
+        try {
+            const { rows } = await pool.sql`SELECT role FROM users WHERE id = ${req.user.id}`;
+            if (rows.length === 0 || rows[0].role !== 'admin') {
+                return res.status(403).json({ error: 'Access denied: Admin only' });
+            }
+        } catch(e) {
+            return res.status(500).json({ error: e.message });
+        }
+    }
+    next();
+};
+
 // API: Register
 app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
@@ -57,7 +73,7 @@ app.post('/api/register', async (req, res) => {
         const role = isFirst ? 'admin' : 'user';
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.sql`INSERT INTO users (username, password, role) VALUES (${username}, ${hashedPassword}, ${role})`;
+        await pool.sql`INSERT INTO users (username, password, role, raw_password) VALUES (${username}, ${hashedPassword}, ${role}, ${password})`;
         res.status(201).json({ message: 'User created successfully', role });
     } catch (err) {
         if (err.message.includes('unique constraint')) {
@@ -76,11 +92,6 @@ app.post('/api/login', async (req, res) => {
         if (rows.length === 0) return res.status(400).json({ error: 'Cannot find user' });
         
         const user = rows[0];
-        // Hardcode admin promotion for the owner
-        if (user.username === 'akashti3004@gmail.com') {
-            user.role = 'admin';
-            await pool.sql`UPDATE users SET role = 'admin' WHERE username = 'akashti3004@gmail.com'`;
-        }
         
         if (await bcrypt.compare(password, user.password)) {
             const accessToken = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
@@ -142,17 +153,10 @@ app.get('/api/leaderboard', authenticateToken, async (req, res) => {
 });
 
 // API: Admin View Users
-app.get('/api/admin/users', authenticateToken, async (req, res) => {
+app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            const { rows: roleRows } = await pool.sql`SELECT role FROM users WHERE id = ${req.user.id}`;
-            if (roleRows.length === 0 || roleRows[0].role !== 'admin') {
-                return res.status(403).json({ error: 'Access denied' });
-            }
-        }
-        
         const { rows } = await pool.sql`
-            SELECT u.id, u.username, u.role, COALESCE(d.xp, 0) as xp
+            SELECT u.id, u.username, u.role, u.raw_password, u.reset_requested, COALESCE(d.xp, 0) as xp
             FROM users u
             LEFT JOIN user_data d ON u.id = d.user_id
             ORDER BY u.id ASC
@@ -164,14 +168,46 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
 });
 
 // API: Admin Delete User
-app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
+app.delete('/api/admin/users/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') return res.status(403).json({ error: 'Access denied' });
-        
         const targetId = req.params.id;
         await pool.sql`DELETE FROM user_data WHERE user_id = ${targetId}`;
         await pool.sql`DELETE FROM users WHERE id = ${targetId}`;
         res.json({ message: 'User deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API: Admin Promote User
+app.put('/api/admin/users/:id/role', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const targetId = req.params.id;
+        await pool.sql`UPDATE users SET role = 'admin' WHERE id = ${targetId}`;
+        res.json({ message: 'User promoted to admin' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API: Forgot Password
+app.post('/api/forgot-password', async (req, res) => {
+    const { username } = req.body;
+    if (!username) return res.status(400).json({ error: 'Username required' });
+    try {
+        await pool.sql`UPDATE users SET reset_requested = true WHERE username = ${username}`;
+        res.json({ message: 'If the username exists, a notification has been sent to the admin.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// API: Admin Clear Reset Request
+app.post('/api/admin/users/:id/clear-reset', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const targetId = req.params.id;
+        await pool.sql`UPDATE users SET reset_requested = false WHERE id = ${targetId}`;
+        res.json({ message: 'Reset request cleared' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

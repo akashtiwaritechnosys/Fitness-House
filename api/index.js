@@ -33,6 +33,7 @@ app.use(express.json());
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS raw_password VARCHAR(255)`;
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_requested BOOLEAN DEFAULT false`;
         await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT true`;
+        await pool.sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS fullname VARCHAR(255) DEFAULT ''`;
         await pool.sql`ALTER TABLE user_data ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0`;
     } catch(e) { console.error("Migration error:", e.message); }
 })();
@@ -65,7 +66,7 @@ const requireAdmin = async (req, res, next) => {
 
 // API: Register
 app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, fullname = '' } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
     try {
@@ -75,7 +76,7 @@ app.post('/api/register', async (req, res) => {
         const isApproved = isFirst ? true : false;
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.sql`INSERT INTO users (username, password, role, raw_password, is_approved) VALUES (${username}, ${hashedPassword}, ${role}, ${password}, ${isApproved})`;
+        await pool.sql`INSERT INTO users (username, password, role, raw_password, is_approved, fullname) VALUES (${username}, ${hashedPassword}, ${role}, ${password}, ${isApproved}, ${fullname})`;
         res.status(201).json({ message: 'User created successfully', role });
     } catch (err) {
         if (err.message.includes('unique constraint')) {
@@ -162,7 +163,7 @@ app.get('/api/leaderboard', authenticateToken, requireAdmin, async (req, res) =>
 app.get('/api/admin/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { rows } = await pool.sql`
-            SELECT u.id, u.username, u.role, u.raw_password, u.reset_requested, u.is_approved, COALESCE(d.xp, 0) as xp
+            SELECT u.id, u.username, u.role, u.raw_password, u.reset_requested, u.is_approved, u.fullname, COALESCE(d.xp, 0) as xp
             FROM users u
             LEFT JOIN user_data d ON u.id = d.user_id
             ORDER BY u.id ASC

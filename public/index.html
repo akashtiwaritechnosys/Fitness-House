@@ -398,6 +398,7 @@
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-card">
             <h2 id="authTitle">Welcome</h2>
+            <input type="text" id="fullname" placeholder="Full Name" style="display: none;">
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
             <button id="authBtn" onclick="handleAuth()">Login</button>
@@ -595,6 +596,7 @@
             document.getElementById('authBtn').innerText = isLoginMode ? 'Login' : 'Register';
             document.getElementById('authSwitch').innerHTML = isLoginMode ? "Don't have an account? <span>Register</span>" : "Already have an account? <span>Login</span>";
             document.getElementById('forgotPasswordLink').style.display = isLoginMode ? 'block' : 'none';
+            document.getElementById('fullname').style.display = isLoginMode ? 'none' : 'block';
         }
 
         async function handleForgotPassword() {
@@ -617,15 +619,18 @@
         async function handleAuth() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
+            const f = document.getElementById('fullname').value.trim();
             if(!u || !p) return showToast('Fill all fields', 'error');
+            if(!isLoginMode && !f) return showToast('Please provide your full name', 'error');
 
             const endpoint = isLoginMode ? '/api/login' : '/api/register';
+            const bodyData = isLoginMode ? { username: u, password: p } : { username: u, password: p, fullname: f };
             
             try {
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
+                    body: JSON.stringify(bodyData)
                 });
                 const data = await res.json();
                 
@@ -1277,7 +1282,7 @@
                 const res = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!res.ok) throw new Error('Access denied');
                 const data = await res.json();
-                let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse; font-size: 0.9rem; min-width: 700px;"><tr><th style="text-align:left; padding: 0.5rem;">ID</th><th style="text-align:left; padding: 0.5rem;">Username</th><th style="text-align:left; padding: 0.5rem;">Role</th><th style="text-align:center; padding: 0.5rem;">Status</th><th style="text-align:left; padding: 0.5rem;">Password</th><th style="padding: 0.5rem; text-align:center;">Action</th></tr>';
+                let html = '<div style="overflow-x: auto;"><table style="width:100%; border-collapse: collapse; font-size: 0.9rem; min-width: 700px;"><tr><th style="text-align:left; padding: 0.5rem;">ID</th><th style="text-align:left; padding: 0.5rem;">User</th><th style="text-align:left; padding: 0.5rem;">Role</th><th style="text-align:center; padding: 0.5rem;">Status</th><th style="text-align:left; padding: 0.5rem;">Password</th><th style="padding: 0.5rem; text-align:center;">Action</th></tr>';
                 data.forEach(u => {
                     const badge = u.reset_requested ? '<span style="background:red; color:white; padding:2px 6px; border-radius:10px; font-size:0.7rem; margin-left:0.5rem; white-space:nowrap;">🔔 Reset Requested!</span>' : '';
                     const statusBadge = u.is_approved ? '<span style="color:var(--success); font-weight:bold;">✅ Active</span>' : '<span style="color:var(--warning); font-weight:bold;">⏳ Pending</span>';
@@ -1289,7 +1294,7 @@
                     html += `
                         <tr style="border-bottom: 1px solid var(--border-color);">
                             <td style="padding: 0.5rem; text-align:left;">${u.id}</td>
-                            <td style="padding: 0.5rem; text-align:left; font-weight:bold;">${u.username} <br>${badge}</td>
+                            <td style="padding: 0.5rem; text-align:left;"><b>${u.username}</b><br><small style="color:var(--text-muted); font-size:0.75rem;">${u.fullname || ''}</small> <br>${badge}</td>
                             <td style="padding: 0.5rem; text-align:left;">${u.role}</td>
                             <td style="padding: 0.5rem; text-align:center;">${statusBadge}</td>
                             <td style="padding: 0.5rem; text-align:left; font-family:monospace; color:var(--danger);">${u.raw_password || 'Hidden'}</td>

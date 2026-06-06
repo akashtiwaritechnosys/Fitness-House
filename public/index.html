@@ -127,7 +127,7 @@
         td { padding: 1.2rem 1rem; vertical-align: middle; text-align: center; }
         td:first-child { text-align: left; padding-left: 1.5rem; font-weight: 500; color: var(--text-main); }
 
-        .editable { cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px dashed transparent; transition: all 0.2s; display: inline-block; min-width: 50px; }
+        .editable { cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px dashed transparent; transition: all 0.2s; display: inline-block; min-width: 50px; word-break: break-word; }
         .editable:hover { background: rgba(0,0,0,0.05); border-color: var(--border-color); }
         body.dark-mode .editable:hover { background: rgba(255,255,255,0.1); }
         .editable:focus { background: transparent; border-color: var(--primary); border-style: solid; outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
@@ -173,6 +173,7 @@
         .user-badge { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
 
         /* V2 Features CSS */
+        .goal-input { width: 100px; }
         .progress-container {
             width: 100%; height: 12px; background: rgba(0,0,0,0.05); border-radius: 6px;
             margin-bottom: 1.5rem; overflow: hidden; position: relative; border: 1px solid var(--border-color);
@@ -204,8 +205,10 @@
             .user-info { width: 100%; justify-content: space-between; flex-direction: row-reverse; }
             th, td { padding: 0.8rem 0.5rem; font-size: 0.9rem; }
             td:first-child, th:first-child { padding-left: 0.5rem; min-width: 120px; }
-            .auth-card { padding: 2rem; margin: 0 1rem; }
+            .auth-card { padding: 1.5rem; margin: 0 auto; width: 92%; }
             .auth-card input { font-size: 16px; }
+            .action-btns { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
+            .action-btns button { width: 100%; }
         }
     </style>
 </head>
@@ -244,7 +247,7 @@
             <h1>Habit Tracker</h1>
             <div class="add-form">
                 <input type="text" id="habitName" placeholder="e.g., 💧 Drink 3L Water" required>
-                <input type="number" id="habitGoal" placeholder="Goal" value="30" min="1" style="width: 100px;">
+                <input type="number" id="habitGoal" placeholder="Goal" value="30" min="1" class="goal-input">
                 <button onclick="addHabit()">Add Habit</button>
             </div>
             <div class="user-info">
@@ -268,7 +271,7 @@
                 <span id="currentWeekLabel" style="min-width: 180px; text-align: center;">Week of ...</span>
                 <button onclick="changeWeek(1)">Next →</button>
             </div>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+            <div class="action-btns" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
                 <button class="secondary-btn" onclick="openChartModal()" style="border-color: var(--primary); color: var(--primary);">📈 View Progress</button>
                 <button class="secondary-btn" onclick="resetData()">Clear All Data</button>
             </div>
@@ -613,7 +616,7 @@
                 
                 let tdHtml = `
                     <td>
-                        <div style="display: flex; align-items: center;">
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                             <span class="editable" contenteditable="true" onblur="updateHabitName(${habit.id}, this.innerText)">${habit.name}</span>
                             ${streakHtml}
                         </div>
